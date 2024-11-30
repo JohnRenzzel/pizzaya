@@ -43,7 +43,7 @@ export default function OrderPage() {
   const [cookingTime, setCookingTime] = useState(15);
   const [isCustomCookingTime, setIsCustomCookingTime] = useState(false);
   const [pendingTime] = useState(0);
-  const [processingTime] = useState(0);
+  const [processingTime] = useState(5);
   const [preparationTime, setPreparationTime] = useState(0);
   const [deliveringTime, setDeliveringTime] = useState(null);
   const [totalDeliveryTime, setTotalDeliveryTime] = useState(null);

@@ -44,20 +44,44 @@ export default function OrdersPage() {
     fetchOrders();
   }, [fetchOrders]);
 
-  const filteredOrders = orders.filter((order) => {
-    if (!order.paid) return false;
+  const filteredOrders = orders
+    .filter((order) => {
+      if (!order.paid) return false;
 
-    if (statusFilter !== "all" && order.status !== statusFilter) return false;
+      if (statusFilter !== "all" && order.status !== statusFilter) return false;
 
-    if (!searchTerm) return true;
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      (order.userEmail?.toLowerCase() || "").includes(searchLower) ||
-      order.cartProducts?.some((p) =>
-        (p.name?.toLowerCase() || "").includes(searchLower)
-      )
-    );
-  });
+      if (!searchTerm) return true;
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        (order.userEmail?.toLowerCase() || "").includes(searchLower) ||
+        order.cartProducts?.some((p) =>
+          (p.name?.toLowerCase() || "").includes(searchLower)
+        )
+      );
+    })
+    .sort((a, b) => {
+      // Define status priority (higher number = higher priority)
+      const statusPriority = {
+        Pending: 5,
+        Processing: 4,
+        Preparing: 3,
+        Delivering: 2,
+        Completed: 1,
+      };
+
+      // First sort by status priority
+      const priorityDiff =
+        (statusPriority[b.status] || 0) - (statusPriority[a.status] || 0);
+      if (priorityDiff !== 0) return priorityDiff;
+
+      // If same status, sort by date
+      // For Completed orders: newer first (reverse chronological)
+      if (a.status === "Completed" && b.status === "Completed") {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      }
+      // For other statuses: older first (chronological)
+      return new Date(a.createdAt) - new Date(b.createdAt);
+    });
 
   function closeModal() {
     setOrderToDelete(null);
