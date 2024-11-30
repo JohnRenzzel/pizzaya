@@ -1,7 +1,7 @@
 "use client";
 
 import { subHours, startOfDay, startOfWeek, startOfMonth } from "date-fns";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import UserTabs from "@/components/layout/UserTabs";
 import Spinner from "@/components/layout/Spinner";
@@ -15,31 +15,22 @@ export default function SalesPage() {
   const { loading, data: profile } = useProfile();
   const { selectedBranch } = useBranch();
 
-  useEffect(() => {
-    if ((profile?.isAdmin && selectedBranch) || profile?.superAdmin) {
-      fetchOrders();
+  const fetchOrders = useCallback(async () => {
+    try {
+      const url = selectedBranch
+        ? `/api/orders?branchId=${selectedBranch._id}`
+        : "/api/orders";
+      const response = await fetch(url);
+      const orders = await response.json();
+      setOrders(orders);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
     }
-  }, [selectedBranch, profile]);
+  }, [selectedBranch]);
 
-  function fetchOrders() {
-    setLoadingOrders(true);
-    axios
-      .get("/api/orders")
-      .then((res) => {
-        // Filter orders by selected branch for both superadmin and branch admin
-        const filteredOrders = selectedBranch
-          ? res.data.filter((order) => order.branchId === selectedBranch._id)
-          : profile?.superAdmin
-          ? res.data
-          : [];
-        setOrders(filteredOrders);
-        setLoadingOrders(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching orders:", error);
-        setLoadingOrders(false);
-      });
-  }
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
 
   function ordersTotal(orders) {
     return orders

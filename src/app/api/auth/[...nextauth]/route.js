@@ -62,7 +62,8 @@ export const authOptions = {
   },
 };
 
-export async function isAdmin(branchId) {
+// Helper functions (not exported)
+async function isAdmin(branchId) {
   const session = await getServerSession(authOptions);
   const userEmail = session?.user?.email;
   if (!userEmail) {
@@ -77,7 +78,7 @@ export async function isAdmin(branchId) {
   );
 }
 
-export async function isSuperAdmin() {
+async function isSuperAdmin() {
   const session = await getServerSession(authOptions);
   const userEmail = session?.user?.email;
   if (!userEmail) {
@@ -87,7 +88,7 @@ export async function isSuperAdmin() {
   return user?.superAdmin || false;
 }
 
-export async function canManageBranch(branchId) {
+async function canManageBranch(branchId) {
   const session = await getServerSession(authOptions);
   const userEmail = session?.user?.email;
   if (!userEmail) {
@@ -102,7 +103,7 @@ export async function canManageBranch(branchId) {
   );
 }
 
-export async function isStaffOrAdmin(branchId) {
+async function isStaffOrAdmin(branchId) {
   const session = await getServerSession(authOptions);
   const userEmail = session?.user?.email;
   if (!userEmail) {
