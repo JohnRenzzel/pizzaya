@@ -1,7 +1,7 @@
 "use client";
 
 import { subHours, startOfDay, startOfWeek, startOfMonth } from "date-fns";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import UserTabs from "@/components/layout/UserTabs";
 import Spinner from "@/components/layout/Spinner";
@@ -15,18 +15,11 @@ export default function SalesPage() {
   const { loading, data: profile } = useProfile();
   const { selectedBranch } = useBranch();
 
-  useEffect(() => {
-    if ((profile?.isAdmin && selectedBranch) || profile?.superAdmin) {
-      fetchOrders();
-    }
-  }, [selectedBranch, profile]);
-
-  function fetchOrders() {
+  const fetchOrders = useCallback(() => {
     setLoadingOrders(true);
     axios
       .get("/api/orders")
       .then((res) => {
-        // Filter orders by selected branch for both superadmin and branch admin
         const filteredOrders = selectedBranch
           ? res.data.filter((order) => order.branchId === selectedBranch._id)
           : profile?.superAdmin
@@ -39,7 +32,13 @@ export default function SalesPage() {
         console.error("Error fetching orders:", error);
         setLoadingOrders(false);
       });
-  }
+  }, [selectedBranch, profile?.superAdmin]);
+
+  useEffect(() => {
+    if ((profile?.isAdmin && selectedBranch) || profile?.superAdmin) {
+      fetchOrders();
+    }
+  }, [selectedBranch, profile, fetchOrders]);
 
   function ordersTotal(orders) {
     return orders

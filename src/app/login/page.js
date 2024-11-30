@@ -6,6 +6,9 @@ import Spinner from "@/components/layout/Spinner";
 
 export default function LoginPage() {
   const { data: session, status } = useSession();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginInProgress, setLoginInProgress] = useState(false);
 
   if (status === "loading") {
     return (
@@ -20,18 +23,13 @@ export default function LoginPage() {
     return null;
   }
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loginInProgress, setLoginInProgress] = useState(false);
-
   async function handleFormSubmit(ev) {
     ev.preventDefault();
     setLoginInProgress(true);
-
     await signIn("credentials", { email, password, callbackUrl: "/" });
-
     setLoginInProgress(false);
   }
+
   return (
     <section className="mt-8">
       <h1 className="text-center text-primary text-4xl mb-4">Login</h1>

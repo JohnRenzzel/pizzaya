@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Spinner from "@/components/layout/Spinner";
 import { useBranch } from "@/components/BranchContext";
@@ -24,39 +24,20 @@ export default function MenuItemDetails() {
   const [selectedExtras, setSelectedExtras] = useState([]);
   const { addToCart } = useContext(CartContext);
 
-  const canManageAvailability = () => {
-    console.log("Availability Check:", {
-      hasSession: !!session?.user,
-      userProfile: session?.user,
-      isSuperAdmin: session?.user?.superAdmin,
-      isAdmin: session?.user?.isAdmin,
-      isStaff: session?.user?.isStaff,
-      userBranchId: session?.user?.branchId,
-      selectedBranchId: selectedBranch?._id,
-    });
-
+  const canManageAvailability = useCallback(() => {
     if (!session?.user) {
-      console.log("No session user");
       return false;
     }
 
     if (session.user.superAdmin) {
-      console.log("Is super admin");
       return true;
     }
 
     const isValidRole = session.user.isAdmin || session.user.isStaff;
     const hasSameBranch = session.user.branchId === selectedBranch?._id;
 
-    console.log("Branch role check:", {
-      isValidRole,
-      hasSameBranch,
-      isAdmin: session.user.isAdmin,
-      isStaff: session.user.isStaff,
-    });
-
     return isValidRole && hasSameBranch;
-  };
+  }, [session?.user, selectedBranch?._id]);
 
   const handleAvailabilityChange = async (e) => {
     try {
@@ -176,7 +157,7 @@ export default function MenuItemDetails() {
       selectedBranchId: selectedBranch?._id,
       canManage: canManageAvailability(),
     });
-  }, [session, selectedBranch]);
+  }, [session, selectedBranch, canManageAvailability]);
 
   useEffect(() => {
     console.log("Full session state:", {

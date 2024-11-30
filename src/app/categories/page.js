@@ -1,6 +1,6 @@
 "use client";
 import UserTabs from "@/components/layout/UserTabs";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import useProfile from "../../components/UseProfile";
 import toast from "react-hot-toast";
 import DeleteButton from "@/components/DeleteButton";
@@ -15,13 +15,7 @@ const CategoriesPage = () => {
   const [categories, setCategories] = useState([]);
   const [editedCategory, setEditedCategory] = useState(null);
 
-  useEffect(() => {
-    if (selectedBranch) {
-      fetchCategories();
-    }
-  }, [selectedBranch]);
-
-  async function fetchCategories() {
+  const fetchCategories = useCallback(async () => {
     try {
       const res = await fetch(`/api/categories?branchId=${selectedBranch._id}`);
       if (!res.ok) throw new Error("Failed to fetch categories");
@@ -31,7 +25,13 @@ const CategoriesPage = () => {
       console.error("Error fetching categories:", error);
       toast.error("Failed to fetch categories");
     }
-  }
+  }, [selectedBranch]);
+
+  useEffect(() => {
+    if (selectedBranch) {
+      fetchCategories();
+    }
+  }, [selectedBranch, fetchCategories]);
 
   async function handleCategorySubmit(ev) {
     ev.preventDefault();

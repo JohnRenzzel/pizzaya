@@ -4,7 +4,7 @@ import AddressInputs from "@/components/layout/AddressInputs";
 import SectionHeaders from "@/components/layout/SectionHeaders";
 import CartProduct from "@/components/menu/CartProduct";
 import { useParams } from "next/navigation";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import Spinner from "@/components/layout/Spinner";
@@ -167,7 +167,7 @@ export default function OrderPage() {
           });
       }
     }
-  }, [id, session.status]);
+  }, [id, session.status, deliveryTimeRanges]);
 
   useEffect(() => {
     if (order) {
@@ -320,7 +320,7 @@ export default function OrderPage() {
     });
   }
 
-  function calculateRemainingTime(order, orderStatus) {
+  const calculateRemainingTime = useCallback(() => {
     if (!order || orderStatus === "Completed") return 0;
 
     const statusDurations = {
@@ -344,7 +344,24 @@ export default function OrderPage() {
     }
 
     return remainingTime * 60; // Convert to seconds
-  }
+  }, [
+    order,
+    orderStatus,
+    pendingTime,
+    processingTime,
+    preparationTime,
+    deliveringTime,
+  ]);
+
+  useEffect(() => {
+    if (order && order.status !== "Completed") {
+      const timer = setInterval(() => {
+        calculateRemainingTime();
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [order, calculateRemainingTime]);
 
   useEffect(() => {
     if (!order || orderStatus === "Completed") {
@@ -352,7 +369,7 @@ export default function OrderPage() {
       return;
     }
 
-    const remainingSeconds = calculateRemainingTime(order, orderStatus);
+    const remainingSeconds = calculateRemainingTime();
     setCountdown(remainingSeconds);
 
     const timer = setInterval(() => {

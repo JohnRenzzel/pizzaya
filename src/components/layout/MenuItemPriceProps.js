@@ -31,10 +31,6 @@ export default function MenuItemPriceProps({
     setProps((prev) => prev.filter((v, index) => index !== indexToRemove));
   }
 
-  useEffect(() => {
-    // ... existing code
-  }, [ls, otherDependencies]);
-
   return (
     <div className="bg-gray-200 p-2 rounded-md mb-2">
       <button

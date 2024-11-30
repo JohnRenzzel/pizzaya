@@ -39,15 +39,6 @@ export default function EditMenuItemPage() {
           return;
         }
         const item = await res.json();
-        console.log("Menu Item Data:", {
-          itemBranchId: item.branchId,
-          itemBranchIdType: typeof item.branchId,
-          fullItem: item,
-        });
-        console.log("User Data:", {
-          userBranchId: data.branchId,
-          userBranchIdType: typeof data.branchId,
-        });
         setMenuItem(item);
       } catch (error) {
         console.error("Error fetching menu item:", error);
@@ -59,6 +50,20 @@ export default function EditMenuItemPage() {
 
     fetchMenuItem();
   }, [id]);
+
+  useEffect(() => {
+    if (menuItem) {
+      console.log("Menu Item Data:", {
+        itemBranchId: menuItem.branchId,
+        itemBranchIdType: typeof menuItem.branchId,
+        fullItem: menuItem,
+      });
+      console.log("User Data:", {
+        userBranchId: data.branchId,
+        userBranchIdType: typeof data.branchId,
+      });
+    }
+  }, [menuItem, data.branchId]);
 
   async function handleFormSubmit(ev, data) {
     ev.preventDefault();

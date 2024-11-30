@@ -23,7 +23,14 @@ export default function BranchHome() {
         selectBranch(branch);
       }
     }
-  }, [branches, params.branchId, loading, selectedBranch]);
+  }, [
+    branches,
+    params.branchId,
+    loading,
+    selectedBranch,
+    router,
+    selectBranch,
+  ]);
 
   if (loading || menuLoading || !selectedBranch) {
     return <Spinner fullWidth={true} />;
