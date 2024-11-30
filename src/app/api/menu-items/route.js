@@ -2,8 +2,8 @@ import mongoose from "mongoose";
 import { MenuItem } from "../../../models/MenuItem";
 import { canManageBranch } from "../auth/[...nextauth]/route";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]/route";
 import { User } from "../../../models/User";
+import { authOptions } from "@/libs/auth";
 
 export async function POST(req) {
   mongoose.connect(process.env.MONGO_URL);

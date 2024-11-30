@@ -1,8 +1,8 @@
-import { Category } from "../../../models/Category";
+import { Category } from "@/models/Category";
 import mongoose from "mongoose";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]/route";
-import { User } from "../../../models/User";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/libs/auth";
+import { User } from "@/models/User";
 
 async function checkAuthorization(branchId) {
   const session = await getServerSession(authOptions);
