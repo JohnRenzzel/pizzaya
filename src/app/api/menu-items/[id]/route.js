@@ -1,6 +1,6 @@
 import { MenuItem } from "@/models/MenuItem";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/libs/auth";
 import mongoose from "mongoose";
 import { NextResponse } from "next/server";
 

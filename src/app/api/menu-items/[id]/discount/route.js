@@ -1,7 +1,7 @@
 import { MenuItem } from "@/models/MenuItem";
 import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/libs/auth";
 import { NextResponse } from "next/server";
 
 export async function PUT(req, { params }) {
