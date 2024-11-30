@@ -24,27 +24,18 @@ export default function OrdersPage() {
     return "all";
   });
 
-  const fetchOrders = useCallback(() => {
-    setLoadingOrders(true);
-    const url = selectedBranch
-      ? `/api/orders?branchId=${selectedBranch._id}`
-      : "/api/orders";
-
-    fetch(url)
-      .then((res) => res.json())
-      .then((orders) => {
-        const sortedOrders = orders.sort((a, b) => {
-          if (a.status === "Completed" && b.status !== "Completed") return 1;
-          if (a.status !== "Completed" && b.status === "Completed") return -1;
-          return 0;
-        });
-        setOrders(sortedOrders);
-        setLoadingOrders(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching orders:", error);
-        setLoadingOrders(false);
-      });
+  const fetchOrders = useCallback(async () => {
+    try {
+      let url = "/api/orders";
+      if (selectedBranch) {
+        url += `?branchId=${selectedBranch._id}`;
+      }
+      const response = await fetch(url);
+      const data = await response.json();
+      setOrders(data);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+    }
   }, [selectedBranch]);
 
   useEffect(() => {

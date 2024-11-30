@@ -1,6 +1,6 @@
 import { Category } from "../../../models/Category";
 import mongoose from "mongoose";
-import { isAdmin, isSuperAdmin } from "../auth/[...nextauth]/route";
+import { isAdmin, isSuperAdmin } from "@/libs/auth";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { User } from "../../../models/User";

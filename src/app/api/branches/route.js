@@ -1,11 +1,11 @@
 import { Branch } from "@/models/Branch";
 import mongoose from "mongoose";
-import { isAdmin } from "../auth/[...nextauth]/route";
+import { isAdmin } from "@/libs/auth";
 
 export async function POST(req) {
   mongoose.connect(process.env.MONGO_URL);
   const data = await req.json();
-  if (await isAdmin()) {
+  if (await isAdmin(data.branchId)) {
     const branchDoc = await Branch.create(data);
     return Response.json(branchDoc);
   }
