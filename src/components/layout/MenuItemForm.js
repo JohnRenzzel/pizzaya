@@ -4,6 +4,7 @@ import DeleteButton from "@/components/DeleteButton";
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import DiscountSelector from "@/components/layout/DiscountSelector";
+import { useBranch } from "@/components/BranchContext";
 
 export default function MenuItemForm({ onSubmit, menuItem, onDelete }) {
   const [image, setImage] = useState(menuItem?.image || "");
@@ -20,14 +21,17 @@ export default function MenuItemForm({ onSubmit, menuItem, onDelete }) {
     menuItem?.isAvailable === undefined ? true : Boolean(menuItem.isAvailable)
   );
   const [discount, setDiscount] = useState(menuItem?.discount || 0);
+  const { selectedBranch } = useBranch();
 
   useEffect(() => {
-    fetch("/api/categories").then((res) => {
-      res.json().then((categories) => {
-        setCategories(categories);
+    if (selectedBranch?._id) {
+      fetch(`/api/categories?branchId=${selectedBranch._id}`).then((res) => {
+        res.json().then((categories) => {
+          setCategories(categories);
+        });
       });
-    });
-  }, []);
+    }
+  }, [selectedBranch]);
 
   const handleSubmit = (ev) => {
     if (!image) {
