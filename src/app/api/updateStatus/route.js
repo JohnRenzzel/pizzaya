@@ -21,36 +21,31 @@ async function checkStaffOrAdmin(branchId) {
 }
 
 export async function POST(req) {
-  mongoose.connect(process.env.MONGO_URL);
-
-  const { orderId, status } = await req.json();
-  if (!orderId || !status) {
-    return new Response(
-      JSON.stringify({ message: "Missing orderId or status" }),
-      { status: 400 }
-    );
-  }
-
   try {
-    // Get the order to check the branch
-    const order = await Order.findById(orderId);
-    if (!order) {
-      return new Response(JSON.stringify({ message: "Order not found" }), {
-        status: 404,
-      });
-    }
+    mongoose.connect(process.env.MONGO_URL);
+    const { orderId, status, totalSeconds } = await req.json();
 
-    // Check if user is authorized for this branch
-    const canManage = await checkStaffOrAdmin(order.branchId.toString());
-    if (!canManage) {
+    // Verify authorization
+    const isAuthorized = await checkStaffOrAdmin();
+    if (!isAuthorized) {
       return new Response(JSON.stringify({ message: "Not authorized" }), {
         status: 403,
       });
     }
 
+    // Update order with new status and countdown
     const updatedOrder = await Order.findByIdAndUpdate(
       orderId,
-      { status: status },
+      {
+        status: status,
+        updatedAt: new Date(),
+        // Set the countdown when updating status
+        $set: {
+          "countdown.currentTime": totalSeconds,
+          "countdown.lastUpdated": new Date(),
+          "countdown.totalDuration": totalSeconds,
+        },
+      },
       { new: true }
     );
 

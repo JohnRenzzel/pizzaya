@@ -9,6 +9,7 @@ import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import Spinner from "@/components/layout/Spinner";
 import { calculateDeliveryTime } from "@/libs/calculateDeliveryTime";
+import { getSocket } from "@/utils/socket";
 
 function formatTime(minutes) {
   if (minutes >= 60) {
@@ -84,12 +85,70 @@ export default function OrderPage() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ orderId: id, status: newStatus }),
+      body: JSON.stringify({
+        orderId: id,
+        status: newStatus,
+        totalSeconds: (() => {
+          let totalTime = 0;
+          switch (newStatus) {
+            case "Pending":
+              totalTime =
+                (pendingTime +
+                  processingTime +
+                  preparationTime +
+                  deliveringTime) *
+                60;
+              break;
+            case "Processing":
+              totalTime =
+                (processingTime + preparationTime + deliveringTime) * 60;
+              break;
+            case "Preparing":
+              totalTime = (preparationTime + deliveringTime) * 60;
+              break;
+            case "Delivering":
+              totalTime = deliveringTime * 60;
+              break;
+            case "Completed":
+              totalTime = 0;
+              break;
+          }
+          return totalTime;
+        })(),
+      }),
     })
       .then((response) => response.json())
       .then((data) => {
         if (data.order) {
           setOrderStatus(newStatus);
+
+          // Calculate new countdown based on new status
+          let newTotalTime = 0;
+          switch (newStatus) {
+            case "Pending":
+              newTotalTime =
+                (pendingTime +
+                  processingTime +
+                  preparationTime +
+                  deliveringTime) *
+                60;
+              break;
+            case "Processing":
+              newTotalTime =
+                (processingTime + preparationTime + deliveringTime) * 60;
+              break;
+            case "Preparing":
+              newTotalTime = (preparationTime + deliveringTime) * 60;
+              break;
+            case "Delivering":
+              newTotalTime = deliveringTime * 60;
+              break;
+            case "Completed":
+              newTotalTime = 0;
+              break;
+          }
+          setCountdown(newTotalTime);
+
           const statusPercentages = {
             Pending: 20,
             Processing: 40,
@@ -98,12 +157,10 @@ export default function OrderPage() {
             Completed: 100,
           };
 
-          // For Pending status, start from 0
           if (newStatus === "Pending") {
             setProgress(0);
             localStorage.setItem(`order_progress_${id}`, "0");
           } else {
-            // For other statuses, start from previous status
             const statusIndex = statusOptions.indexOf(newStatus);
             const previousStatus = statusOptions[statusIndex - 1];
             const startProgress = statusPercentages[previousStatus] || 0;
@@ -300,6 +357,7 @@ export default function OrderPage() {
         deliveringTime: deliveringTime,
         pendingTime: pendingTime,
         processingTime: processingTime,
+        totalSeconds: total * 60,
       }),
     })
       .then((response) => response.json())
@@ -323,6 +381,12 @@ export default function OrderPage() {
   const calculateRemainingTime = useCallback(() => {
     if (!order || orderStatus === "Completed") return 0;
 
+    // Get the time elapsed since the order status was last updated
+    const lastStatusUpdate = new Date(order.updatedAt || order.createdAt);
+    const elapsedMinutes = Math.floor(
+      (new Date() - lastStatusUpdate) / (1000 * 60)
+    );
+
     const statusDurations = {
       Pending: pendingTime,
       Processing: processingTime,
@@ -337,8 +401,11 @@ export default function OrderPage() {
     for (const status of Object.keys(statusDurations)) {
       if (status === orderStatus) {
         foundCurrentStatus = true;
-      }
-      if (foundCurrentStatus) {
+        // Subtract elapsed time only from current status
+        const statusTime = statusDurations[status];
+        remainingTime += Math.max(0, statusTime - elapsedMinutes);
+      } else if (foundCurrentStatus) {
+        // Add full duration for upcoming statuses
         remainingTime += statusDurations[status];
       }
     }
@@ -364,26 +431,46 @@ export default function OrderPage() {
   }, [order, calculateRemainingTime]);
 
   useEffect(() => {
-    if (!order || orderStatus === "Completed") {
-      setCountdown(null);
-      return;
-    }
+    if (order && orderStatus !== "Completed") {
+      const calculateInitialCountdown = () => {
+        const lastUpdate = new Date(
+          order.countdown?.lastUpdated || order.updatedAt || order.createdAt
+        );
+        const now = new Date();
+        const elapsedSeconds = Math.floor((now - lastUpdate) / 1000);
+        const totalTime = order.countdown?.totalDuration || 0;
 
-    const remainingSeconds = calculateRemainingTime();
-    setCountdown(remainingSeconds);
+        return Math.max(0, totalTime - elapsedSeconds);
+      };
 
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 0) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
+      const initialCountdown = calculateInitialCountdown();
+      setCountdown(initialCountdown);
+
+      // Emit initial countdown to socket
+      const socket = getSocket();
+      socket.emit("startCountdown", {
+        orderId: id,
+        remainingTime: initialCountdown,
+        status: orderStatus,
       });
-    }, 1000);
+    }
+  }, [order, orderStatus, id]);
 
-    return () => clearInterval(timer);
-  }, [order, orderStatus, calculateRemainingTime]);
+  useEffect(() => {
+    if (countdown > 0 && orderStatus !== "Completed") {
+      const timer = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 0) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [countdown, orderStatus]);
 
   function formatCountdown(seconds) {
     if (!seconds) return "00:00:00";
@@ -396,6 +483,30 @@ export default function OrderPage() {
       .toString()
       .padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
   }
+
+  useEffect(() => {
+    const socket = getSocket();
+
+    if (id) {
+      // Join the order room
+      socket.emit("joinOrderRoom", id);
+
+      // Listen for countdown updates
+      socket.on("countdownUpdate", (data) => {
+        if (data.orderId === id) {
+          // Add check to ensure update is for current order
+          const { remainingTime } = data;
+          setCountdown(remainingTime);
+        }
+      });
+
+      // Cleanup function
+      return () => {
+        socket.off("countdownUpdate");
+        socket.emit("leaveOrderRoom", id);
+      };
+    }
+  }, [id]);
 
   if (session.status === "unauthenticated") {
     return "Please login to view order details";
