@@ -5,17 +5,15 @@ import toast from "react-hot-toast";
 import UserTabs from "@/components/layout/UserTabs";
 import Link from "next/link";
 import Left from "@/components/icons/Left";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import MenuItemForm from "@/components/layout/MenuItemForm";
 import Spinner from "@/components/layout/Spinner";
 import { useBranch } from "@/components/BranchContext";
-import { useRouter } from "next/navigation";
 
 export default function NewMenuItemPage() {
   const { loading, data } = useProfile();
-  const [redirectToItems, setRedirectToItems] = useState(false);
-  const { selectedBranch } = useBranch();
   const router = useRouter();
+  const { selectedBranch } = useBranch();
 
   // Redirect to home if no branch is selected
   if (!selectedBranch) {
@@ -74,14 +72,10 @@ export default function NewMenuItemPage() {
         success: "Saved",
         error: (err) => err || "Error saving menu item",
       });
-      setRedirectToItems(true);
+      router.push("/menu-items");
     } catch (error) {
       console.error("Error saving menu item:", error);
     }
-  }
-
-  if (redirectToItems) {
-    return redirect("/menu-items");
   }
 
   if (loading) {
