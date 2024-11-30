@@ -1,7 +1,7 @@
 "use client";
-import { signIn, useSession } from "next-auth/react";
-import Image from "next/image";
+import { signIn } from "next-auth/react";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
 import Spinner from "@/components/layout/Spinner";
 
 export default function LoginPage() {
