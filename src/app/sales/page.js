@@ -1,7 +1,7 @@
 "use client";
 
 import { subHours, startOfDay, startOfWeek, startOfMonth } from "date-fns";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import UserTabs from "@/components/layout/UserTabs";
 import Spinner from "@/components/layout/Spinner";
@@ -15,11 +15,18 @@ export default function SalesPage() {
   const { loading, data: profile } = useProfile();
   const { selectedBranch } = useBranch();
 
-  const fetchOrders = useCallback(() => {
+  useEffect(() => {
+    if ((profile?.isAdmin && selectedBranch) || profile?.superAdmin) {
+      fetchOrders();
+    }
+  }, [selectedBranch, profile]);
+
+  function fetchOrders() {
     setLoadingOrders(true);
     axios
       .get("/api/orders")
       .then((res) => {
+        // Filter orders by selected branch for both superadmin and branch admin
         const filteredOrders = selectedBranch
           ? res.data.filter((order) => order.branchId === selectedBranch._id)
           : profile?.superAdmin
@@ -32,13 +39,7 @@ export default function SalesPage() {
         console.error("Error fetching orders:", error);
         setLoadingOrders(false);
       });
-  }, [selectedBranch, profile?.superAdmin]);
-
-  useEffect(() => {
-    if ((profile?.isAdmin && selectedBranch) || profile?.superAdmin) {
-      fetchOrders();
-    }
-  }, [selectedBranch, profile, fetchOrders]);
+  }
 
   function ordersTotal(orders) {
     return orders
@@ -104,25 +105,19 @@ export default function SalesPage() {
           <div className="grid grid-cols-3 gap-4 mb-4">
             <div className="tile">
               <h3 className="tile-header">Today</h3>
-              <div className="tile-number">
-                ₱{ordersTotal(ordersToday).toFixed(2)}
-              </div>
+              <div className="tile-number">₱{ordersTotal(ordersToday)}</div>
               <div className="tile-desc">{ordersToday.length} orders today</div>
             </div>
             <div className="tile">
               <h3 className="tile-header">This week</h3>
-              <div className="tile-number">
-                ₱{ordersTotal(ordersWeek).toFixed(2)}
-              </div>
+              <div className="tile-number">₱{ordersTotal(ordersWeek)}</div>
               <div className="tile-desc">
                 {ordersWeek.length} orders this week
               </div>
             </div>
             <div className="tile">
               <h3 className="tile-header">This month</h3>
-              <div className="tile-number">
-                ₱{ordersTotal(ordersMonth).toFixed(2)}
-              </div>
+              <div className="tile-number">₱{ordersTotal(ordersMonth)}</div>
               <div className="tile-desc">
                 {ordersMonth.length} orders this month
               </div>
@@ -132,25 +127,19 @@ export default function SalesPage() {
           <div className="grid grid-cols-3 gap-4">
             <div className="tile">
               <h3 className="tile-header">Today</h3>
-              <div className="tile-number">
-                ₱{ordersTotal(ordersToday).toFixed(2)}
-              </div>
+              <div className="tile-number">₱{ordersTotal(ordersToday)}</div>
               <div className="tile-desc">{ordersToday.length} orders today</div>
             </div>
             <div className="tile">
               <h3 className="tile-header">This week</h3>
-              <div className="tile-number">
-                ₱{ordersTotal(ordersWeek).toFixed(2)}
-              </div>
+              <div className="tile-number">₱{ordersTotal(ordersWeek)}</div>
               <div className="tile-desc">
                 {ordersWeek.length} orders this week
               </div>
             </div>
             <div className="tile">
               <h3 className="tile-header">This month</h3>
-              <div className="tile-number">
-                ₱{ordersTotal(ordersMonth).toFixed(2)}
-              </div>
+              <div className="tile-number">₱{ordersTotal(ordersMonth)}</div>
               <div className="tile-desc">
                 {ordersMonth.length} orders this month
               </div>

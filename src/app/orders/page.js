@@ -4,7 +4,7 @@ import UserTabs from "@/components/layout/UserTabs";
 import useProfile from "@/components/UseProfile";
 import { dbTimeForHuman } from "@/libs/datetime";
 import Link from "next/link";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useBranch } from "@/components/BranchContext";
 import { useSession } from "next-auth/react";
 
@@ -24,25 +24,34 @@ export default function OrdersPage() {
     return "all";
   });
 
-  const fetchOrders = useCallback(async () => {
-    try {
-      let url = "/api/orders";
-      if (selectedBranch) {
-        url += `?branchId=${selectedBranch._id}`;
-      }
-      const response = await fetch(url);
-      const data = await response.json();
-      setOrders(data);
-    } catch (error) {
-      console.error("Error fetching orders:", error);
-    }
-  }, [selectedBranch]);
-
   useEffect(() => {
     if (session.status === "authenticated") {
       fetchOrders();
     }
-  }, [selectedBranch, profile, session.status, fetchOrders]);
+  }, [selectedBranch, profile, session.status]);
+
+  function fetchOrders() {
+    setLoadingOrders(true);
+    const url = selectedBranch
+      ? `/api/orders?branchId=${selectedBranch._id}`
+      : "/api/orders";
+
+    fetch(url)
+      .then((res) => res.json())
+      .then((orders) => {
+        const sortedOrders = orders.sort((a, b) => {
+          if (a.status === "Completed" && b.status !== "Completed") return 1;
+          if (a.status !== "Completed" && b.status === "Completed") return -1;
+          return 0;
+        });
+        setOrders(sortedOrders);
+        setLoadingOrders(false);
+      })
+      .catch((error) => {
+        console.error("Error fetching orders:", error);
+        setLoadingOrders(false);
+      });
+  }
 
   const filteredOrders = orders.filter((order) => {
     if (!order.paid) return false;
