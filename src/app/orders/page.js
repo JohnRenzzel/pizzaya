@@ -4,7 +4,7 @@ import UserTabs from "@/components/layout/UserTabs";
 import useProfile from "@/components/UseProfile";
 import { dbTimeForHuman } from "@/libs/datetime";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useBranch } from "@/components/BranchContext";
 import { useSession } from "next-auth/react";
 
@@ -24,13 +24,7 @@ export default function OrdersPage() {
     return "all";
   });
 
-  useEffect(() => {
-    if (session.status === "authenticated") {
-      fetchOrders();
-    }
-  }, [selectedBranch, profile, session.status]);
-
-  function fetchOrders() {
+  const fetchOrders = useCallback(() => {
     setLoadingOrders(true);
     const url = selectedBranch
       ? `/api/orders?branchId=${selectedBranch._id}`
@@ -51,7 +45,13 @@ export default function OrdersPage() {
         console.error("Error fetching orders:", error);
         setLoadingOrders(false);
       });
-  }
+  }, [selectedBranch]);
+
+  useEffect(() => {
+    if (session.status === "authenticated") {
+      fetchOrders();
+    }
+  }, [selectedBranch, profile, session.status]);
 
   const filteredOrders = orders.filter((order) => {
     if (!order.paid) return false;

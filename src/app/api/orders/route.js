@@ -1,11 +1,7 @@
 import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { Order } from "@/models/Order";
-import {
-  authOptions,
-  isAdmin,
-  isStaffOrAdmin,
-} from "@/app/api/auth/[...nextauth]/route";
+import { isAdmin, isStaffOrAdmin } from "@/libs/auth";
 import { User } from "@/models/User";
 
 export async function GET(req) {

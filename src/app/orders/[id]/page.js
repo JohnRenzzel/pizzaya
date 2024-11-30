@@ -383,7 +383,7 @@ export default function OrderPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [order, orderStatus, preparationTime, deliveringTime]);
+  }, [order, orderStatus, calculateRemainingTime]);
 
   function formatCountdown(seconds) {
     if (!seconds) return "00:00:00";
