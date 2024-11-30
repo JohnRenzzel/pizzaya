@@ -2,6 +2,7 @@ import Link from "next/link";
 import AddToCartButton from "./AddToCartButton";
 import { useBranch } from "@/components/BranchContext";
 import { toast } from "react-hot-toast";
+import Image from "next/image";
 
 export default function MenuItemTile({ onAddToCart, ...item }) {
   const { image, description, name, basePrice, sizes, extraIngredientPrices } =
@@ -55,10 +56,12 @@ export default function MenuItemTile({ onAddToCart, ...item }) {
           </div>
         )}
         <div className="text-center h-40 relative">
-          <img
+          <Image
             src={image}
-            className="w-full h-full object-contain"
             alt={name}
+            width={200}
+            height={200}
+            className="w-full h-full object-contain"
           />
         </div>
         <div className="flex-grow flex flex-col gap-1">

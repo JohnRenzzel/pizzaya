@@ -25,7 +25,15 @@ export default function RouteGuard({ children, requiredAuth = false }) {
         router.push("/");
       }
     }
-  }, [loading, isSuperAdmin, isBranchAdmin, isBranchStaff, selectedBranch]);
+  }, [
+    requiredAuth,
+    router,
+    loading,
+    isSuperAdmin,
+    isBranchAdmin,
+    isBranchStaff,
+    selectedBranch,
+  ]);
 
   if (loading) {
     return <Spinner fullWidth={true} />;

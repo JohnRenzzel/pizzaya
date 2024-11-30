@@ -2,7 +2,7 @@ import Trash from "@/components/icons/Trash";
 import Plus from "@/components/icons/Plus";
 import ChevronDown from "@/components/icons/ChevronDown";
 import ChevronUp from "@/components/icons/ChevronUp";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function MenuItemPriceProps({
   name,
@@ -30,6 +30,11 @@ export default function MenuItemPriceProps({
   function removeProp(indexToRemove) {
     setProps((prev) => prev.filter((v, index) => index !== indexToRemove));
   }
+
+  useEffect(() => {
+    // ... existing code
+  }, [ls, otherDependencies]);
+
   return (
     <div className="bg-gray-200 p-2 rounded-md mb-2">
       <button
@@ -45,7 +50,7 @@ export default function MenuItemPriceProps({
       <div className={isOpen ? "block" : "hidden"}>
         {props?.length > 0 &&
           props.map((size, index) => (
-            <div className="flex gap-2 items-end">
+            <div key={size.id || index} className="flex gap-2 items-end">
               <div>
                 <label>Name</label>
                 <input
