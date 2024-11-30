@@ -1,9 +1,8 @@
 import clientPromise from "@/libs/mongoConnect";
-import { UserInfo } from "@/models/UserInfo";
 import bcrypt from "bcrypt";
 import * as mongoose from "mongoose";
 import { User } from "@/models/User";
-import NextAuth, { getServerSession } from "next-auth";
+import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
@@ -61,62 +60,6 @@ export const authOptions = {
     },
   },
 };
-
-export async function isAdmin(branchId) {
-  const session = await getServerSession(authOptions);
-  const userEmail = session?.user?.email;
-  if (!userEmail) {
-    return false;
-  }
-  const user = await User.findOne({ email: userEmail });
-  if (!user) {
-    return false;
-  }
-  return (
-    user.superAdmin || (user.isAdmin && user.branchId?.toString() === branchId)
-  );
-}
-
-export async function isSuperAdmin() {
-  const session = await getServerSession(authOptions);
-  const userEmail = session?.user?.email;
-  if (!userEmail) {
-    return false;
-  }
-  const user = await User.findOne({ email: userEmail });
-  return user?.superAdmin || false;
-}
-
-export async function canManageBranch(branchId) {
-  const session = await getServerSession(authOptions);
-  const userEmail = session?.user?.email;
-  if (!userEmail) {
-    return false;
-  }
-  const user = await User.findOne({ email: userEmail });
-  if (!user) {
-    return false;
-  }
-  return (
-    user.superAdmin || (user.isAdmin && user.branchId.toString() === branchId)
-  );
-}
-
-export async function isStaffOrAdmin(branchId) {
-  const session = await getServerSession(authOptions);
-  const userEmail = session?.user?.email;
-  if (!userEmail) {
-    return false;
-  }
-  const user = await User.findOne({ email: userEmail });
-  if (!user) {
-    return false;
-  }
-  return (
-    user.superAdmin ||
-    ((user.isAdmin || user.isStaff) && user.branchId?.toString() === branchId)
-  );
-}
 
 const handler = NextAuth(authOptions);
 
