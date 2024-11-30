@@ -1,11 +1,22 @@
 import { Branch } from "@/models/Branch";
 import mongoose from "mongoose";
-import { isAdmin } from "../auth/[...nextauth]/route";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
+import { User } from "@/models/User";
+
+async function checkIsAdmin() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return false;
+  }
+  const user = await User.findOne({ email: session.user.email });
+  return user?.superAdmin || user?.isAdmin;
+}
 
 export async function POST(req) {
   mongoose.connect(process.env.MONGO_URL);
   const data = await req.json();
-  if (await isAdmin()) {
+  if (await checkIsAdmin()) {
     const branchDoc = await Branch.create(data);
     return Response.json(branchDoc);
   }

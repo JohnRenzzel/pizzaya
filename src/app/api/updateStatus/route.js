@@ -1,6 +1,24 @@
 import { Order } from "@/models/Order";
 import mongoose from "mongoose";
-import { isStaffOrAdmin } from "@/app/api/auth/[...nextauth]/route";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { User } from "@/models/User";
+
+async function checkStaffOrAdmin(branchId) {
+  const session = await getServerSession(authOptions);
+  const userEmail = session?.user?.email;
+  if (!userEmail) {
+    return false;
+  }
+  const user = await User.findOne({ email: userEmail });
+  if (!user) {
+    return false;
+  }
+  return (
+    user.superAdmin ||
+    ((user.isAdmin || user.isStaff) && user.branchId?.toString() === branchId)
+  );
+}
 
 export async function POST(req) {
   mongoose.connect(process.env.MONGO_URL);
@@ -23,7 +41,7 @@ export async function POST(req) {
     }
 
     // Check if user is authorized for this branch
-    const canManage = await isStaffOrAdmin(order.branchId.toString());
+    const canManage = await checkStaffOrAdmin(order.branchId.toString());
     if (!canManage) {
       return new Response(JSON.stringify({ message: "Not authorized" }), {
         status: 403,

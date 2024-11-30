@@ -1,12 +1,24 @@
 import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
 import { Order } from "@/models/Order";
-import {
-  authOptions,
-  isAdmin,
-  isStaffOrAdmin,
-} from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { User } from "@/models/User";
+
+async function checkStaffOrAdmin(branchId) {
+  const session = await getServerSession(authOptions);
+  const userEmail = session?.user?.email;
+  if (!userEmail) {
+    return false;
+  }
+  const user = await User.findOne({ email: userEmail });
+  if (!user) {
+    return false;
+  }
+  return (
+    user.superAdmin ||
+    ((user.isAdmin || user.isStaff) && user.branchId?.toString() === branchId)
+  );
+}
 
 export async function GET(req) {
   mongoose.connect(process.env.MONGO_URL);
@@ -54,15 +66,17 @@ export async function GET(req) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 }
+
 export async function POST(req) {
-  const staffOrAdmin = await isStaffOrAdmin();
-  if (!staffOrAdmin) {
+  const isAuthorized = await checkStaffOrAdmin();
+  if (!isAuthorized) {
     return Response.status(403).json({ error: "Unauthorized" });
   }
   const { orderId, status } = req.body;
   await Order.updateOne({ _id: orderId }, { $set: { status } });
   return Response.json({ message: "Order status updated" });
 }
+
 export async function DELETE(req) {
   try {
     mongoose.connect(process.env.MONGO_URL);

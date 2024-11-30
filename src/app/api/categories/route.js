@@ -1,9 +1,19 @@
 import { Category } from "../../../models/Category";
 import mongoose from "mongoose";
-import { isAdmin, isSuperAdmin } from "../auth/[...nextauth]/route";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { User } from "../../../models/User";
+
+async function checkAuthorization(branchId) {
+  const session = await getServerSession(authOptions);
+  const user = await User.findOne({ email: session?.user?.email });
+  if (!user) return false;
+
+  // Check if user is superadmin or branch admin
+  return (
+    user.superAdmin || (user.isAdmin && user.branchId?.toString() === branchId)
+  );
+}
 
 export async function POST(req) {
   mongoose.connect(process.env.MONGO_URL);
@@ -43,7 +53,7 @@ export async function GET(req) {
 export async function PUT(req) {
   mongoose.connect(process.env.MONGO_URL);
   const { _id, name, branchId } = await req.json();
-  if ((await isAdmin(branchId)) || (await isSuperAdmin())) {
+  if (await checkAuthorization(branchId)) {
     await Category.updateOne({ _id }, { name });
   }
   return Response.json(true);
