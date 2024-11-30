@@ -26,14 +26,17 @@ export default function OrdersPage() {
 
   const fetchOrders = useCallback(async () => {
     try {
+      setLoadingOrders(true);
       const url = selectedBranch
         ? `/api/orders?branchId=${selectedBranch._id}`
         : "/api/orders";
       const response = await fetch(url);
       const orders = await response.json();
       setOrders(orders.reverse());
+      setLoadingOrders(false);
     } catch (error) {
       console.error("Error fetching orders:", error);
+      setLoadingOrders(false);
     }
   }, [selectedBranch]);
 

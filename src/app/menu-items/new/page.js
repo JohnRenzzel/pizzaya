@@ -1,6 +1,6 @@
 "use client";
 import useProfile from "@/components/UseProfile";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import UserTabs from "@/components/layout/UserTabs";
 import Link from "next/link";
@@ -14,17 +14,19 @@ export default function NewMenuItemPage() {
   const { loading, data } = useProfile();
   const router = useRouter();
   const { selectedBranch } = useBranch();
+  const [mounted, setMounted] = useState(false);
 
-  // Redirect to home if no branch is selected
-  if (!selectedBranch) {
-    router.push("/");
-    return null;
-  }
+  useEffect(() => {
+    setMounted(true);
+    if (mounted && !selectedBranch) {
+      router.push("/");
+    }
+  }, [selectedBranch, router, mounted]);
 
   // Check if user is authorized (superadmin or branch admin)
   const isAuthorized =
     data?.superAdmin ||
-    (data?.isAdmin && data?.branchId === selectedBranch._id);
+    (data?.isAdmin && data?.branchId === selectedBranch?._id);
 
   async function handleFormSubmit(ev, data) {
     ev.preventDefault();
