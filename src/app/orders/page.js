@@ -42,7 +42,7 @@ export default function OrdersPage() {
     if (session.status === "authenticated") {
       fetchOrders();
     }
-  }, [selectedBranch, profile, session.status]);
+  }, [selectedBranch, profile, session.status, fetchOrders]);
 
   const filteredOrders = orders.filter((order) => {
     if (!order.paid) return false;
