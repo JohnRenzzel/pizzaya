@@ -1,7 +1,6 @@
 import { MenuItem } from "@/models/MenuItem";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/libs/auth";
-import mongoose from "mongoose";
 import { NextResponse } from "next/server";
 
 export async function PATCH(req, { params }) {

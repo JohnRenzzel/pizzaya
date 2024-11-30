@@ -76,15 +76,24 @@ export default function EditMenuItemPage() {
       toast.error("Description is required");
       return;
     }
-    if (!data.price || data.price <= 0) {
+
+    const basePrice = Number(data.basePrice);
+    console.log("Parsed basePrice:", basePrice, "Type:", typeof basePrice);
+
+    if (isNaN(basePrice) || basePrice <= 0) {
+      console.log("Price validation failed:", {
+        isNaN: isNaN(basePrice),
+        basePrice: basePrice,
+      });
       toast.error("Price must be greater than zero");
       return;
     }
 
     data = {
       ...data,
+      basePrice,
       _id: id,
-      branchId: menuItem.branchId, // Preserve the original branchId
+      branchId: menuItem.branchId,
     };
     const savingPromise = new Promise(async (resolve, reject) => {
       const response = await fetch("/api/menu-items", {
