@@ -18,9 +18,7 @@ export default function MenuItemDetails() {
   const { selectedBranch } = useBranch();
   const { data: session } = useSession();
   const [showPopup, setShowPopup] = useState(false);
-  const [selectedSize, setSelectedSize] = useState(
-    menuItem?.sizes?.[0] || null
-  );
+  const [selectedSize, setSelectedSize] = useState(null);
   const [selectedExtras, setSelectedExtras] = useState([]);
   const { addToCart } = useContext(CartContext);
 
@@ -212,6 +210,9 @@ export default function MenuItemDetails() {
     ) {
       if (!showPopup) {
         setShowPopup(true);
+        if (menuItem.sizes?.length > 0) {
+          setSelectedSize(menuItem.sizes[0]);
+        }
         return;
       }
       addToCart(menuItem, selectedSize, selectedExtras, 1, finalPrice);

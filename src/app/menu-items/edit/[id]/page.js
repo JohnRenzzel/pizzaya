@@ -67,6 +67,20 @@ export default function EditMenuItemPage() {
 
   async function handleFormSubmit(ev, data) {
     ev.preventDefault();
+
+    if (!data.name?.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    if (!data.description?.trim()) {
+      toast.error("Description is required");
+      return;
+    }
+    if (!data.price || data.price <= 0) {
+      toast.error("Price must be greater than zero");
+      return;
+    }
+
     data = {
       ...data,
       _id: id,

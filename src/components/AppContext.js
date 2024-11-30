@@ -1,6 +1,12 @@
 "use client";
 import { SessionProvider } from "next-auth/react";
-import { createContext, useEffect, useState, useMemo } from "react";
+import {
+  createContext,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
 import toast from "react-hot-toast";
 import { BranchProvider } from "./BranchContext";
 
@@ -37,10 +43,18 @@ export function AppProvider({ children }) {
     }
   }, [ls]);
 
-  function clearCart() {
+  const clearCart = useCallback(() => {
     setCartProducts([]);
-    saveCartProductsToLocalStorage([]);
-  }
+    localStorage.removeItem("cart");
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (window.location.href.includes("clear-cart=1")) {
+        clearCart();
+      }
+    }
+  }, [clearCart]);
 
   function removeCartProduct(indexToRemove) {
     setCartProducts((prevCartProducts) => {

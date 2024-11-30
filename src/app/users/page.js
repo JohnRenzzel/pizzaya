@@ -30,7 +30,8 @@ export default function UsersPage() {
                 if (selectedBranch) {
                   // If branch selected, show only that branch's staff and admin
                   return (
-                    user.branchId === selectedBranch._id || // Show branch staff and admin
+                    (user.branchId === selectedBranch._id &&
+                      (user.isAdmin || user.isStaff)) || // Show branch staff OR admin (not both)
                     (!user.isAdmin && !user.isStaff && !user.branchId) // Show customers
                   );
                 } else {
@@ -43,8 +44,12 @@ export default function UsersPage() {
               if (profile?.isAdmin) {
                 return (
                   selectedBranch &&
-                  ((user.isAdmin && user.branchId === selectedBranch._id) ||
-                    (user.isStaff && user.branchId === selectedBranch._id) ||
+                  ((user.isAdmin &&
+                    !user.isStaff &&
+                    user.branchId === selectedBranch._id) ||
+                    (user.isStaff &&
+                      !user.isAdmin &&
+                      user.branchId === selectedBranch._id) ||
                     (!user.isAdmin && !user.isStaff && !user.branchId))
                 );
               }
@@ -139,8 +144,14 @@ export default function UsersPage() {
                     <div className="w-full sm:w-1/4 min-w-0 sm:min-w-[120px] text-gray-500 mt-2 sm:mt-0">
                       <span className="inline-block px-2 py-1 rounded-full text-sm bg-gray-200">
                         {user.superAdmin && "Super Admin"}
-                        {user.branchId && user.isAdmin && "Branch Admin"}
-                        {user.branchId && user.isStaff && "Branch Staff"}
+                        {user.branchId &&
+                          user.isAdmin &&
+                          !user.isStaff &&
+                          "Branch Admin"}
+                        {user.branchId &&
+                          user.isStaff &&
+                          !user.isAdmin &&
+                          "Branch Staff"}
                         {!user.superAdmin && !user.branchId && "Customer"}
                       </span>
                     </div>

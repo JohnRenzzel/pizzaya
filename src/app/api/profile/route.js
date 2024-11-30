@@ -77,13 +77,22 @@ export async function PUT(req) {
 
       // Handle role updates
       if (loggedInUser.superAdmin) {
-        userUpdate.isAdmin = data.isAdmin;
+        // If making someone an admin, ensure they're not staff
         if (data.isAdmin) {
+          userUpdate.isAdmin = true;
+          userUpdate.isStaff = false;
+          userUpdate.branchId = data.branchId;
+        }
+        // If making someone staff, ensure they're not admin
+        if (data.isStaff) {
+          userUpdate.isStaff = true;
+          userUpdate.isAdmin = false;
           userUpdate.branchId = data.branchId;
         }
       }
 
       if (loggedInUser.isAdmin) {
+        // Branch admin can only manage staff status
         userUpdate.isStaff = data.isStaff;
         if (data.isStaff) {
           userUpdate.branchId = loggedInUser.branchId;

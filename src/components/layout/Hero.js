@@ -1,7 +1,20 @@
 import Right from "@/components/icons/Right";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useBranch } from "@/components/BranchContext";
 
 export default function Hero() {
+  const router = useRouter();
+  const { selectedBranch } = useBranch();
+
+  const goToMenu = () => {
+    if (selectedBranch?._id) {
+      router.push(`/menu?branchId=${selectedBranch._id}`);
+    } else {
+      router.push("/menu");
+    }
+  };
+
   return (
     <section className="hero md:mt-4">
       <div className="py-8 md:py-12">
@@ -18,7 +31,10 @@ export default function Hero() {
           delicious joy in life
         </p>
         <div className="flex gap-4 text-sm">
-          <button className="flex justify-center bg-primary uppercase items-center gap-2 text-white px-4 py-2 rounded-full">
+          <button
+            onClick={goToMenu}
+            className="flex justify-center bg-primary uppercase items-center gap-2 text-white px-4 py-2 rounded-full"
+          >
             Order now
             <Right />
           </button>

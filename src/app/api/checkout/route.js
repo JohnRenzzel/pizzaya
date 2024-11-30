@@ -13,18 +13,28 @@ export async function POST(req) {
   const userEmail = session?.user?.email;
 
   let totalPrice = 0;
-
   const stripeLineItems = [];
+
   for (const cartProduct of cartProducts) {
     const productInfo = await MenuItem.findById(cartProduct._id);
 
+    // Calculate base price
     let productPrice = productInfo.basePrice;
+
+    // Apply discount if exists
+    if (productInfo.discount > 0) {
+      productPrice = productPrice * (1 - productInfo.discount / 100);
+    }
+
+    // Add size price if selected
     if (cartProduct.size) {
       const size = productInfo.sizes.find(
         (size) => size?._id?.toString() === cartProduct?.size?._id?.toString()
       );
       productPrice += size?.price || 0;
     }
+
+    // Add extras prices
     if (cartProduct.extras?.length > 0) {
       for (const cartProductExtraThing of cartProduct.extras) {
         const productExtras = productInfo.extraIngredientPrices;
@@ -32,80 +42,40 @@ export async function POST(req) {
           (extra) =>
             extra._id.toString() === cartProductExtraThing._id.toString()
         );
-        productPrice += extraThingInfo.price;
+        productPrice += extraThingInfo?.price || 0;
       }
     }
 
-    totalPrice += productPrice;
+    // Multiply by quantity
+    const quantity = cartProduct.quantity || 1;
+    totalPrice += productPrice * quantity;
 
     const productName = cartProduct.name;
 
     stripeLineItems.push({
-      quantity: cartProduct.quantity || 1,
+      quantity: quantity,
       price_data: {
         currency: "PHP",
         product_data: {
           name: productName,
         },
-        unit_amount: productPrice * 100,
+        unit_amount: Math.round(productPrice * 100), // Convert to cents and ensure it's an integer
       },
     });
   }
 
-  const deliveryFee = 2000;
+  const deliveryFee = 2000; // 20 PHP in cents
   totalPrice += deliveryFee / 100;
 
-  const orderProducts = await Promise.all(
-    cartProducts.map(async (cartProduct) => {
-      const productInfo = await MenuItem.findById(cartProduct._id);
-      if (!productInfo) {
-        throw new Error(`Product not found: ${cartProduct._id}`);
-      }
-
-      let price = productInfo.basePrice;
-
-      if (cartProduct.size) {
-        const size = productInfo.sizes.find(
-          (size) => size?._id?.toString() === cartProduct?.size?._id?.toString()
-        );
-        price += size?.price || 0;
-      }
-
-      if (cartProduct.extras?.length > 0) {
-        for (const extraThing of cartProduct.extras) {
-          const productExtras = productInfo.extraIngredientPrices;
-          const extraThingInfo = productExtras.find(
-            (extra) => extra._id.toString() === extraThing._id.toString()
-          );
-          price += extraThingInfo?.price || 0;
-        }
-      }
-
-      return {
-        _id: productInfo._id.toString(),
-        name: productInfo.name,
-        image: productInfo.image,
-        basePrice: productInfo.basePrice,
-        size: cartProduct.size,
-        extras: cartProduct.extras,
-        price: price,
-        quantity: cartProduct.quantity || 1,
-      };
-    })
-  );
-
-  console.log("Order Products:", orderProducts);
-
+  // Create order with correct prices
   const orderDoc = await Order.create({
     userEmail,
     ...address,
-    cartProducts: orderProducts,
+    cartProducts,
     branchId,
     paid: false,
     totalPrice,
   });
-
-  console.log("Created Order:", orderDoc);
 
   const stripeSession = await stripe.checkout.sessions.create({
     line_items: stripeLineItems,
