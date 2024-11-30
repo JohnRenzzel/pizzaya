@@ -1,14 +1,21 @@
 "use client";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
+import Image from "next/image";
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 import Spinner from "@/components/layout/Spinner";
 
 export default function LoginPage() {
-  const { data: session, status } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loginInProgress, setLoginInProgress] = useState(false);
+  const [loginInProgress, setLoginInProgress] = useState("");
+  const { data: session, status } = useSession();
+
+  async function handleFormSubmit(ev) {
+    ev.preventDefault();
+    setLoginInProgress(true);
+    await signIn("credentials", { email, password, callbackUrl: "/" });
+    setLoginInProgress(false);
+  }
 
   if (status === "loading") {
     return (
@@ -21,13 +28,6 @@ export default function LoginPage() {
   if (session) {
     window.location.href = "/";
     return null;
-  }
-
-  async function handleFormSubmit(ev) {
-    ev.preventDefault();
-    setLoginInProgress(true);
-    await signIn("credentials", { email, password, callbackUrl: "/" });
-    setLoginInProgress(false);
   }
 
   return (
