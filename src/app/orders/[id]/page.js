@@ -688,6 +688,7 @@ export default function OrderPage() {
                       }}
                       value={isCustomCookingTime ? "custom" : preparationTime}
                     >
+                      <option>Set Cooking Time</option>
                       <option value="15">Standard (15 minutes)</option>
                       <option value="20">20 minutes</option>
                       <option value="25">25 minutes</option>
