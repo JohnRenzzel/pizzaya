@@ -195,91 +195,102 @@ export default function OrdersPage() {
           </h2>
         )}
         {isSuperAdmin && !selectedBranch && (
-          <h2 className="text-sm text-gray-500">All Orders (Super Admin)</h2>
+          <h2 className="text-sm text-gray-500">
+            Please select a branch to view orders
+          </h2>
         )}
         {!selectedBranch && isRegularUser && (
           <h2 className="text-sm text-gray-500">Your Orders (All Branches)</h2>
         )}
       </div>
-      {canSearch() && (
-        <div className="mt-4">
-          <input
-            type="text"
-            placeholder="Search by email or product name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md"
-          />
-        </div>
-      )}
-      <div className="mt-4 flex gap-2 justify-center overflow-x-auto whitespace-nowrap">
-        <StatusFilterButton status="all" />
-        <StatusFilterButton status="Pending" />
-        <StatusFilterButton status="Processing" />
-        <StatusFilterButton status="Preparing" />
-        <StatusFilterButton status="Delivering" />
-        <StatusFilterButton status="Completed" />
-      </div>
-      <div className="mt-8">
-        {loadingOrders && (
-          <div className="my-4">
-            <Spinner fullWidth={true} />
+      {(!isSuperAdmin || selectedBranch) && (
+        <>
+          {canSearch() && (
+            <div className="mt-4">
+              <input
+                type="text"
+                placeholder="Search by email or product name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md"
+              />
+            </div>
+          )}
+          <div className="mt-4 flex gap-2 justify-center overflow-x-auto whitespace-nowrap">
+            <StatusFilterButton status="all" />
+            <StatusFilterButton status="Pending" />
+            <StatusFilterButton status="Processing" />
+            <StatusFilterButton status="Preparing" />
+            <StatusFilterButton status="Delivering" />
+            <StatusFilterButton status="Completed" />
           </div>
-        )}
-        {filteredOrders.length === 0 && !loadingOrders && (
-          <div className="text-center text-gray-500">
-            {searchTerm ? "No matching orders found" : "No orders found"}
-          </div>
-        )}
-        {filteredOrders.length > 0 &&
-          filteredOrders.map((order) => (
-            <div
-              key={order._id}
-              className={`mb-2 p-4 rounded-lg flex flex-col md:flex-row items-center gap-4 md:gap-6 ${getStatusColor(
-                order.status
-              )}`}
-            >
-              <div className="w-full md:grow flex flex-col md:flex-row items-center gap-3 md:gap-6">
-                <div className="w-full md:w-auto flex justify-center md:justify-start">
-                  {canDelete() ? (
-                    <button
-                      onClick={() => setOrderToDelete(order._id)}
-                      className="bg-red-500 p-2 rounded-md text-white w-24 text-center hover:bg-red-600 transition-colors"
-                    >
-                      Delete
-                    </button>
-                  ) : (
-                    <div
-                      className={`text-sm font-medium p-2 rounded-md w-24 text-center shadow-lg 
+          <div className="mt-8">
+            {loadingOrders && (
+              <div className="my-4">
+                <Spinner fullWidth={true} />
+              </div>
+            )}
+            {filteredOrders.length === 0 && !loadingOrders && (
+              <div className="text-center text-gray-500">
+                {searchTerm ? "No matching orders found" : "No orders found"}
+              </div>
+            )}
+            {filteredOrders.length > 0 &&
+              filteredOrders.map((order) => (
+                <div
+                  key={order._id}
+                  className={`mb-2 p-4 rounded-lg flex flex-col md:flex-row items-center gap-4 md:gap-6 ${getStatusColor(
+                    order.status
+                  )}`}
+                >
+                  <div className="w-full md:grow flex flex-col md:flex-row items-center gap-3 md:gap-6">
+                    <div className="w-full md:w-auto flex justify-center md:justify-start">
+                      {canDelete() ? (
+                        <button
+                          onClick={() => setOrderToDelete(order._id)}
+                          className="bg-red-500 p-2 rounded-md text-white w-24 text-center hover:bg-red-600 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      ) : (
+                        <div
+                          className={`text-sm font-medium p-2 rounded-md w-24 text-center shadow-lg 
     ${getStatusColor(order.status)} border border-gray-400
     hover:border-gray-300 transition-all duration-300 ease-in-out transform hover:-translate-y-1`}
-                    >
-                      {order.status}
+                        >
+                          {order.status}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div className="w-full md:grow">
-                  <div className="flex flex-col md:flex-row gap-2 items-center mb-1">
-                    <div className="w-full md:grow text-center md:text-left">
-                      {order.userEmail}
-                    </div>
-                    <div className="text-gray-500 text-sm">
-                      {dbTimeForHuman(order.createdAt)}
+                    <div className="w-full md:grow">
+                      <div className="flex flex-col md:flex-row gap-2 items-center mb-1">
+                        <div className="w-full md:grow text-center md:text-left">
+                          {order.userEmail}
+                        </div>
+                        <div className="text-gray-500 text-sm">
+                          {dbTimeForHuman(order.createdAt)}
+                        </div>
+                      </div>
+                      <div className="text-gray-500 text-xs text-center md:text-left">
+                        {order.cartProducts.map((p) => p.name).join(", ")}
+                      </div>
                     </div>
                   </div>
-                  <div className="text-gray-500 text-xs text-center md:text-left">
-                    {order.cartProducts.map((p) => p.name).join(", ")}
+                  <div className="w-full md:w-auto flex justify-center md:justify-end gap-2 items-center whitespace-nowrap mt-3 md:mt-0">
+                    <Link href={`/orders/${order._id}`} className="button">
+                      Show order
+                    </Link>
                   </div>
                 </div>
-              </div>
-              <div className="w-full md:w-auto flex justify-center md:justify-end gap-2 items-center whitespace-nowrap mt-3 md:mt-0">
-                <Link href={`/orders/${order._id}`} className="button">
-                  Show order
-                </Link>
-              </div>
-            </div>
-          ))}
-      </div>
+              ))}
+          </div>
+        </>
+      )}
+      {isSuperAdmin && !selectedBranch && (
+        <div className="text-center mt-8 text-gray-500">
+          Please select a branch from the dropdown to view orders
+        </div>
+      )}
       {orderToDelete && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
           <div className="bg-white p-4 rounded-lg max-w-sm mx-4 w-full">

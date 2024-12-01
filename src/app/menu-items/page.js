@@ -16,17 +16,8 @@ export default function MenuItemsPage() {
   const { selectedBranch } = useBranch();
 
   useEffect(() => {
-    if (profile?.superAdmin) {
-      // Fetch all menu items for superadmin
-      fetch("/api/menu-items").then((response) => {
-        if (response.ok) {
-          response.json().then((menuItems) => {
-            setMenuItems(menuItems);
-          });
-        }
-      });
-    } else if (profile?.isAdmin && selectedBranch) {
-      // Fetch branch-specific menu items
+    if (selectedBranch) {
+      // Always fetch menu items for the selected branch, even for superadmin
       fetch(`/api/menu-items?branchId=${selectedBranch._id}`).then(
         (response) => {
           if (response.ok) {
@@ -37,7 +28,7 @@ export default function MenuItemsPage() {
         }
       );
     }
-  }, [selectedBranch, profile]);
+  }, [selectedBranch]);
 
   if (loading) {
     return (
@@ -57,8 +48,8 @@ export default function MenuItemsPage() {
     return "Not authorized";
   }
 
-  if (!selectedBranch && !isSuperAdmin) {
-    return "Please select a branch";
+  if (!selectedBranch) {
+    return "Please select a branch to view menu items";
   }
 
   const filteredMenuItems = menuItems.filter((item) =>
@@ -70,16 +61,9 @@ export default function MenuItemsPage() {
       <section className="mt-8 max-w-2xl mx-auto">
         <UserTabs isAdmin={true} />
         <div className="text-center mt-4">
-          {selectedBranch && (
-            <h2 className="text-sm text-gray-500">
-              Menu items for branch: {selectedBranch.name}
-            </h2>
-          )}
-          {isSuperAdmin && !selectedBranch && (
-            <h2 className="text-sm text-gray-500">
-              All Menu Items (Super Admin)
-            </h2>
-          )}
+          <h2 className="text-sm text-gray-500">
+            Menu items for branch: {selectedBranch.name}
+          </h2>
         </div>
         <div className="mt-8">
           <input

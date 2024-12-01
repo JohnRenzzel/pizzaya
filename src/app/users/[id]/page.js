@@ -54,7 +54,7 @@ export default function EditUserPage() {
   async function handleSaveButtonClick(ev, data) {
     ev.preventDefault();
     const promise = new Promise(async (resolve, reject) => {
-      const res = await fetch("/api/profile", {
+      const res = await fetch(`/api/users/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

@@ -80,6 +80,11 @@ export default function OrderPage() {
   }, [session, order]);
 
   function handleStatusChange(newStatus) {
+    if (!canManageOrders) {
+      toast.error("You can only manage orders from your assigned branch");
+      return;
+    }
+
     const updatePromise = fetch("/api/updateStatus", {
       method: "POST",
       headers: {
@@ -180,7 +185,7 @@ export default function OrderPage() {
     toast.promise(updatePromise, {
       loading: "Updating status...",
       success: "Status updated successfully!",
-      error: (err) => `Failed to update status: ${err.toString()}`,
+      error: "Failed to update status",
     });
   }
 

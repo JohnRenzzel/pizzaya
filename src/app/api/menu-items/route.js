@@ -26,6 +26,19 @@ export async function POST(req) {
   }
 
   try {
+    // Check if menu item with same name exists in the same branch
+    const existingMenuItem = await MenuItem.findOne({
+      name: { $regex: new RegExp(`^${data.name}$`, "i") }, // Case-insensitive search
+      branchId: data.branchId,
+    });
+
+    if (existingMenuItem) {
+      return Response.json(
+        { error: "A menu item with this name already exists in this branch" },
+        { status: 400 }
+      );
+    }
+
     // Ensure discount is a number and calculate discounted price
     const discount = parseInt(data.discount) || 0;
     const basePrice = parseFloat(data.basePrice);

@@ -89,6 +89,54 @@ export default function EditMenuItemPage() {
       return;
     }
 
+    if (data.sizes && data.sizes.length > 0) {
+      for (let i = 0; i < data.sizes.length; i++) {
+        const size = data.sizes[i];
+        if (!size.name) {
+          toast.error(`Size #${i + 1} requires a name`);
+          return;
+        }
+        if (
+          size.price === undefined ||
+          size.price === null ||
+          size.price === ""
+        ) {
+          toast.error(`Size #${i + 1} requires a price (can be 0)`);
+          return;
+        }
+        const sizePrice = parseFloat(size.price);
+        if (isNaN(sizePrice)) {
+          toast.error(`Size #${i + 1} requires a valid number for price`);
+          return;
+        }
+      }
+    }
+
+    if (data.extraIngredientPrices && data.extraIngredientPrices.length > 0) {
+      for (let i = 0; i < data.extraIngredientPrices.length; i++) {
+        const extra = data.extraIngredientPrices[i];
+        if (!extra.name) {
+          toast.error(`Extra ingredient #${i + 1} requires a name`);
+          return;
+        }
+        if (
+          extra.price === undefined ||
+          extra.price === null ||
+          extra.price === ""
+        ) {
+          toast.error(`Extra ingredient #${i + 1} requires a price (can be 0)`);
+          return;
+        }
+        const extraPrice = parseFloat(extra.price);
+        if (isNaN(extraPrice)) {
+          toast.error(
+            `Extra ingredient #${i + 1} requires a valid number for price`
+          );
+          return;
+        }
+      }
+    }
+
     data = {
       ...data,
       basePrice,
