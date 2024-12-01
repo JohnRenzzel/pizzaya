@@ -25,8 +25,16 @@ export async function POST(req) {
     mongoose.connect(process.env.MONGO_URL);
     const { orderId, status, totalSeconds } = await req.json();
 
-    // Verify authorization
-    const isAuthorized = await checkStaffOrAdmin();
+    // First, get the order to check its branchId
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return new Response(JSON.stringify({ message: "Order not found" }), {
+        status: 404,
+      });
+    }
+
+    // Verify authorization with the order's branchId
+    const isAuthorized = await checkStaffOrAdmin(order.branchId.toString());
     if (!isAuthorized) {
       return new Response(JSON.stringify({ message: "Not authorized" }), {
         status: 403,
@@ -39,7 +47,6 @@ export async function POST(req) {
       {
         status: status,
         updatedAt: new Date(),
-        // Set the countdown when updating status
         $set: {
           "countdown.currentTime": totalSeconds,
           "countdown.lastUpdated": new Date(),

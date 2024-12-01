@@ -55,19 +55,43 @@ export async function PUT(req, { params }) {
     // Check if user is authorized
     const session = await getServerSession(authOptions);
     const adminUser = await User.findOne({ email: session?.user?.email });
+    const targetUser = await User.findById(id);
 
-    if (!adminUser?.superAdmin) {
+    if (!adminUser) {
+      return Response.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    // Allow both superadmin and branch admin to update users
+    const isAuthorized =
+      adminUser.superAdmin ||
+      (adminUser.isAdmin &&
+        adminUser.branchId &&
+        (!targetUser.branchId ||
+          targetUser.branchId.toString() === adminUser.branchId.toString()));
+
+    if (!isAuthorized) {
       return Response.json({ error: "Not authorized" }, { status: 401 });
     }
 
-    // Update user data
+    // Prepare user update data
     const userUpdate = {
       name: data.name,
       image: data.image,
-      isAdmin: data.isAdmin,
-      isStaff: data.isStaff,
-      branchId: data.branchId,
     };
+
+    // Handle role updates based on user type
+    if (adminUser.superAdmin) {
+      // Superadmin can set any role
+      userUpdate.isAdmin = data.isAdmin;
+      userUpdate.isStaff = data.isStaff;
+      userUpdate.branchId = data.branchId;
+    } else if (adminUser.isAdmin) {
+      // Branch admin can only set staff role for their branch
+      userUpdate.isStaff = data.isStaff;
+      if (data.isStaff) {
+        userUpdate.branchId = adminUser.branchId;
+      }
+    }
 
     // Update User model
     const updatedUser = await User.findByIdAndUpdate(id, userUpdate, {
