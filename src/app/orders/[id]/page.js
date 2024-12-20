@@ -639,9 +639,12 @@ export default function OrderPage() {
                 {[15, 20, 25, 30].map((time) => (
                   <button
                     key={time}
-                    onClick={() => handleCookingTimeUpdate(time)}
+                    onClick={() => {
+                      handleCookingTimeUpdate(time);
+                      setIsCustomCookingTime(false);
+                    }}
                     className={`py-2 px-3 rounded-lg text-sm font-medium ${
-                      preparationTime === time
+                      preparationTime === time && !isCustomCookingTime
                         ? "bg-primary text-white"
                         : "bg-white border hover:bg-gray-50"
                     }`}
@@ -650,15 +653,28 @@ export default function OrderPage() {
                   </button>
                 ))}
               </div>
+              <button
+                onClick={() => setIsCustomCookingTime(true)}
+                className={`w-full mt-2 py-2 px-3 rounded-lg text-sm font-medium ${
+                  isCustomCookingTime
+                    ? "bg-primary text-white"
+                    : "bg-white border hover:bg-gray-50"
+                }`}
+              >
+                Other
+              </button>
               {isCustomCookingTime && (
                 <input
                   type="number"
                   min="1"
                   max="120"
                   value={preparationTime}
-                  onChange={(e) => setPreparationTime(parseInt(e.target.value))}
+                  onChange={(e) =>
+                    handleCookingTimeUpdate(parseInt(e.target.value))
+                  }
                   className="mt-2 w-full p-2 border rounded-lg"
                   placeholder="Custom minutes"
+                  autoFocus
                 />
               )}
             </div>
@@ -667,12 +683,16 @@ export default function OrderPage() {
               <h3 className="font-medium text-gray-800 mb-3">Delivery Time</h3>
               <div className="space-y-2">
                 <div className="grid grid-cols-2 gap-2">
-                  {deliveryTimeRanges.slice(0, 4).map((range) => (
+                  {deliveryTimeRanges.map((range) => (
                     <button
                       key={range.range}
-                      onClick={() => handleDeliveryTimeUpdate(range)}
+                      onClick={() => {
+                        handleDeliveryTimeUpdate(range);
+                        setIsCustomDeliveryTime(false);
+                      }}
                       className={`py-2 px-3 rounded-lg text-sm font-medium ${
-                        selectedTimeRange?.range === range.range
+                        selectedTimeRange?.range === range.range &&
+                        !isCustomDeliveryTime
                           ? "bg-primary text-white"
                           : "bg-white border hover:bg-gray-50"
                       }`}
@@ -681,6 +701,16 @@ export default function OrderPage() {
                     </button>
                   ))}
                 </div>
+                <button
+                  onClick={() => setIsCustomDeliveryTime(true)}
+                  className={`w-full py-2 px-3 rounded-lg text-sm font-medium ${
+                    isCustomDeliveryTime
+                      ? "bg-primary text-white"
+                      : "bg-white border hover:bg-gray-50"
+                  }`}
+                >
+                  Other
+                </button>
                 {isCustomDeliveryTime && (
                   <input
                     type="number"
@@ -698,6 +728,7 @@ export default function OrderPage() {
                     }}
                     className="mt-2 w-full p-2 border rounded-lg"
                     placeholder="Custom delivery time"
+                    autoFocus
                   />
                 )}
               </div>
@@ -716,11 +747,37 @@ export default function OrderPage() {
       )}
 
       <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-12 md:col-span-8">
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <h2 className="font-semibold text-lg mb-4">Order Items</h2>
+            {order?.cartProducts?.length > 0 ? (
+              <div className="space-y-4">
+                {order.cartProducts.map((product) => (
+                  <CartProduct
+                    key={product._id}
+                    product={product}
+                    readOnly={true}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500">No items in this order</p>
+            )}
+          </div>
+        </div>
+
+        <div className="col-span-12 md:col-span-4">
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <h2 className="font-semibold text-lg mb-4">Delivery Details</h2>
+            <AddressInputs disabled={true} addressProps={order} />
+          </div>
+        </div>
+
         <div className="col-span-12 md:col-span-9">
           <div className="bg-white p-2 rounded-lg shadow-sm overflow-x-auto">
             <h2 className="font-semibold text-lg mb-4">Order Status</h2>
             <div className="overflow-x-auto">
-              <div className="flex gap-4 min-w-max pb-4">
+              <div className="flex flex-col md:flex-row gap-4 min-w-max pb-4">
                 {statusOptions.map((status, index) => (
                   <div key={status} className="flex-1 min-w-[200px]">
                     <div
@@ -792,9 +849,14 @@ export default function OrderPage() {
                       )}
                     </div>
 
-                    {/* Connector Line */}
+                    {/* Connector Line - Vertical for mobile, Horizontal for desktop */}
                     {index < statusOptions.length - 1 && (
-                      <div className="h-0.5 bg-gray-200 mt-6 mx-2" />
+                      <>
+                        <div className="h-4 w-0.5 bg-gray-200 ml-4 md:hidden my-1" />{" "}
+                        {/* Vertical line for mobile */}
+                        <div className="hidden md:block h-0.5 bg-gray-200 mt-6 mx-2" />{" "}
+                        {/* Horizontal line for desktop */}
+                      </>
                     )}
                   </div>
                 ))}
@@ -822,32 +884,6 @@ export default function OrderPage() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div className="col-span-12 md:col-span-8">
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <h2 className="font-semibold text-lg mb-4">Order Items</h2>
-            {order?.cartProducts?.length > 0 ? (
-              <div className="space-y-4">
-                {order.cartProducts.map((product) => (
-                  <CartProduct
-                    key={product._id}
-                    product={product}
-                    readOnly={true}
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500">No items in this order</p>
-            )}
-          </div>
-        </div>
-
-        <div className="col-span-12 md:col-span-4">
-          <div className="bg-white p-6 rounded-lg shadow-sm">
-            <h2 className="font-semibold text-lg mb-4">Delivery Details</h2>
-            <AddressInputs disabled={true} addressProps={order} />
           </div>
         </div>
       </div>

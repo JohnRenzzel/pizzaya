@@ -28,7 +28,7 @@ export default function CartProduct({
         <div className="text-center sm:text-left flex justify-between">
           <h3 className="font-semibold text-lg sm:text-md">{product.name}</h3>
           {product.size && (
-            <div className="text-sm text-gray-500">
+            <div className="text-sm text-gray-500 px-2">
               Size: <span>{product.size.name}</span>
             </div>
           )}
