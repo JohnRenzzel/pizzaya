@@ -139,13 +139,26 @@ export default function OrdersPage() {
   function StatusFilterButton({ status }) {
     const bgColor =
       status === statusFilter ? getStatusColor(status) : "bg-gray-50";
+    const count = orders.filter(
+      (order) =>
+        order.paid && (status === "all" ? true : order.status === status)
+    ).length;
+
+    // Only show badge if status is not "Completed" and not "all"
+    const showBadge = status !== "Completed" && status !== "all" && count > 0;
+
     return (
       <button
         onClick={() => handleStatusFilterChange(status)}
-        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors
+        className={`px-2 sm:px-4 py-1 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-colors relative whitespace-nowrap overflow-visible mt-2
           ${bgColor} hover:bg-opacity-80`}
       >
         {status}
+        {showBadge && (
+          <span className="absolute -top-2.5 -right-1.5 bg-red-500 text-white text-[10px] sm:text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center z-10">
+            {count}
+          </span>
+        )}
       </button>
     );
   }
@@ -216,7 +229,7 @@ export default function OrdersPage() {
               />
             </div>
           )}
-          <div className="mt-4 flex gap-2 justify-center overflow-x-auto whitespace-nowrap">
+          <div className="mt-4 flex gap-1 sm:gap-2 justify-start overflow-x-auto pb-2 px-2 pt-2">
             <StatusFilterButton status="all" />
             <StatusFilterButton status="Pending" />
             <StatusFilterButton status="Processing" />

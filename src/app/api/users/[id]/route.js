@@ -81,7 +81,6 @@ export async function PUT(req, { params }) {
 
     // Handle role updates based on user type
     if (adminUser.superAdmin) {
-      // Superadmin can set any role
       userUpdate.isAdmin = data.isAdmin;
       userUpdate.isStaff = data.isStaff;
       userUpdate.branchId = data.branchId;

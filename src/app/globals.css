@@ -59,7 +59,7 @@ button[type="submit"]:disabled,
   @apply uppercase text-gray-500 font-bold text-xs text-center;
 }
 .tile-number {
-  @apply md:text-3xl text-center mt-2 font-bold;
+  @apply md:text-4xl text-center mt-2 font-bold;
 }
 .tile-desc {
   @apply text-xs text-gray-500;
@@ -116,4 +116,14 @@ button[type="submit"]:disabled,
 
 .animate-float-delayed {
   animation: float-delayed 6s ease-in-out infinite;
+}
+
+/* Add these new styles for hiding scrollbars */
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }

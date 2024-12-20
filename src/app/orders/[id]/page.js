@@ -22,6 +22,23 @@ function formatTime(minutes) {
   return `${minutes} minutes`;
 }
 
+function getStatusColor(status) {
+  switch (status) {
+    case "Completed":
+      return "bg-green-100 text-green-800";
+    case "Delivering":
+      return "bg-blue-100 text-blue-800";
+    case "Preparing":
+      return "bg-yellow-100 text-yellow-800";
+    case "Processing":
+      return "bg-gray-200 text-gray-800";
+    case "Pending":
+      return "bg-red-100 text-red-800";
+    default:
+      return "bg-gray-100 text-gray-800";
+  }
+}
+
 export default function OrderPage() {
   const [orderStatus, setOrderStatus] = useState("Pending");
   const { clearCart } = useContext(CartContext);
@@ -543,10 +560,10 @@ export default function OrderPage() {
   const statusIndex = statusOptions.indexOf(orderStatus);
 
   return (
-    <section className="max-w-2xl mx-auto mt-8 px-4 sm:px-6">
-      <div className="text-center">
+    <section className="max-w-7xl mx-auto mt-8 px-4">
+      <div className="mb-8 text-center">
         <SectionHeaders mainHeader="Your order" />
-        <div className="mt-6 mb-8 space-y-2">
+        <div className="mt-6 mb-8 space-y-2 max-w-md mx-auto">
           <p className="text-gray-600">Thanks for your order.</p>
           <p className="text-gray-600">
             We will call you when your order is on the way.
@@ -576,294 +593,264 @@ export default function OrderPage() {
               </>
             )}
           </p>
-          {canManageOrders && (
-            <div className="mt-8 space-y-6">
-              {/* Time Breakdown Display */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-medium text-gray-700 mb-2">
-                  Delivery Time Breakdown:
-                </h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Preparation Time:</span>
-                    <span>{formatTime(preparationTime)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Delivering Time:</span>
-                    <span>
-                      {deliveringTime
-                        ? formatTime(deliveringTime)
-                        : "0 minutes"}
-                    </span>
-                  </div>
-                  <div className="border-t pt-2 flex justify-between font-medium">
-                    <span>Total Estimated Time:</span>
-                    <span>
-                      {formatTime(
-                        pendingTime +
-                          processingTime +
-                          preparationTime +
-                          (deliveringTime || 0)
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Delivery Time and Cooking Time Controls */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Delivery Time Selector */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Set Delivery Time Based on Distance
-                  </label>
-                  <div className="space-y-3">
-                    <select
-                      className="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white"
-                      onChange={(e) => {
-                        if (e.target.value === "custom") {
-                          setIsCustomDeliveryTime(true);
-                        } else {
-                          const selected = deliveryTimeRanges.find(
-                            (r) => r.range === e.target.value
-                          );
-                          if (selected) {
-                            setIsCustomDeliveryTime(false);
-                            handleDeliveryTimeUpdate(selected);
-                          }
-                        }
-                      }}
-                      value={
-                        isCustomDeliveryTime
-                          ? "custom"
-                          : selectedTimeRange?.range || ""
-                      }
-                    >
-                      <option value="">Select distance range</option>
-                      {deliveryTimeRanges.map((range) => (
-                        <option key={range.range} value={range.range}>
-                          {range.label} - {formatTime(range.minutes)}
-                        </option>
-                      ))}
-                      <option value="custom">Other</option>
-                    </select>
-
-                    {isCustomDeliveryTime && (
-                      <input
-                        type="number"
-                        min="1"
-                        max="120"
-                        value={deliveringTime || ""}
-                        onChange={(e) => {
-                          const minutes = parseInt(e.target.value);
-                          setDeliveringTime(minutes);
-                          setSelectedTimeRange({
-                            range: "custom",
-                            label: "Custom",
-                            minutes: minutes,
-                          });
-                        }}
-                        className="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white"
-                        placeholder="Minutes"
-                      />
-                    )}
-                  </div>
-                </div>
-
-                {/* Cooking Time Selector */}
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Set Cooking Time
-                  </label>
-                  <div className="space-y-3">
-                    <select
-                      className="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white"
-                      onChange={(e) => {
-                        if (e.target.value === "custom") {
-                          setIsCustomCookingTime(true);
-                        } else {
-                          setIsCustomCookingTime(false);
-                          handleCookingTimeUpdate(e.target.value);
-                        }
-                      }}
-                      value={isCustomCookingTime ? "custom" : preparationTime}
-                    >
-                      <option>Set Cooking Time</option>
-                      <option value="15">Standard (15 minutes)</option>
-                      <option value="20">20 minutes</option>
-                      <option value="25">25 minutes</option>
-                      <option value="30">30 minutes</option>
-                      <option value="custom">Other</option>
-                    </select>
-
-                    {isCustomCookingTime && (
-                      <input
-                        type="number"
-                        min="1"
-                        max="120"
-                        value={preparationTime}
-                        onChange={(e) =>
-                          setPreparationTime(parseInt(e.target.value))
-                        }
-                        className="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-white"
-                        placeholder="Minutes"
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Save Total Time Button */}
-              <button
-                onClick={handleSaveTotalTime}
-                className="w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-primary/90 transition-colors font-medium"
-              >
-                Save Total Delivery Time
-              </button>
-            </div>
-          )}
         </div>
       </div>
-      {order && (
-        <div className="grid md:grid-cols-2 gap-8 md:gap-12">
-          <div className="space-y-6">
-            {order?.cartProducts?.length > 0 && (
-              <>
-                <div className="space-y-4">
-                  {order.cartProducts.map((product) => (
-                    <CartProduct
-                      key={product._id}
-                      product={product}
-                      readOnly={true}
-                    />
-                  ))}
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg shadow-sm">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Subtotal:</span>
-                      <span className="font-semibold">
-                        ₱{subtotal.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Delivery:</span>
-                      <span className="font-semibold">₱20</span>
-                    </div>
-                    <div className="border-t pt-2 mt-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-800 font-medium">
-                          Total:
-                        </span>
-                        <span className="font-bold text-lg">
-                          ₱{(subtotal + 20).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-            {order && !order.cartProducts?.length && (
-              <div className="text-center p-4 bg-gray-50 rounded-lg text-gray-500">
-                No products found in this order
-              </div>
-            )}
-            <div className="bg-white p-4 rounded-lg shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-lg text-gray-800">
-                  Order Status
-                </h2>
+
+      {canManageOrders && (
+        <div className="bg-white rounded-lg shadow-sm p-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-medium text-gray-800">Order Status</h3>
                 <span
-                  className="px-3 py-1 rounded-full text-sm font-medium"
-                  style={{
-                    backgroundColor:
-                      orderStatus === "Completed"
-                        ? "#86efac" // green-300
-                        : orderStatus === "Delivering"
-                        ? "#93c5fd" // blue-300
-                        : orderStatus === "Preparing"
-                        ? "#fcd34d" // yellow-300
-                        : orderStatus === "Processing"
-                        ? "#cbd5e1" // slate-300
-                        : "#f87171", // red-400 for Pending
-                    color:
-                      orderStatus === "Completed"
-                        ? "#14532d" // green-900
-                        : orderStatus === "Delivering"
-                        ? "#1e3a8a" // blue-900
-                        : orderStatus === "Preparing"
-                        ? "#78350f" // yellow-900
-                        : orderStatus === "Processing"
-                        ? "#0f172a" // slate-900
-                        : "#7f1d1d", // red-900 for Pending
-                  }}
+                  className={`px-2 py-1 rounded-full text-sm ${
+                    orderStatus === "Completed"
+                      ? "bg-green-100 text-green-800"
+                      : orderStatus === "Delivering"
+                      ? "bg-blue-100 text-blue-800"
+                      : orderStatus === "Preparing"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-gray-100 text-gray-800"
+                  }`}
                 >
                   {orderStatus}
                 </span>
               </div>
-              {orderStatus !== "Completed" && (
-                <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4 overflow-hidden">
-                  <div
-                    className="h-2.5 rounded-full transition-all"
-                    style={{
-                      width: `${progress}%`,
-                      background: `linear-gradient(
-                        90deg,
-                        rgba(79, 70, 229, 0.8) 0%,
-                        rgba(79, 70, 229, 1) 10%,
-                        rgba(79, 70, 229, 0.8) 10%,
-                        rgba(79, 70, 229, 1) 60%,
-                        rgba(79, 70, 229, 0.8) 60%,
-                        rgba(79, 70, 229, 1) 70%,
-                        rgba(79, 70, 229, 0.8) 70%,
-                        rgba(79, 70, 229, 1) 100%
-                      )`,
-                      backgroundSize: "200% 100%",
-                      animation: "statusBarShimmer 4s linear infinite",
-                    }}
-                  />
-                </div>
-              )}
-              {canManageOrders && (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    const newStatus = e.target.status.value;
-                    handleStatusChange(newStatus);
-                  }}
-                  className="space-y-3"
-                >
-                  <select
-                    name="status"
-                    value={orderStatus}
-                    onChange={(e) => setOrderStatus(e.target.value)}
-                    className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                  >
-                    {statusOptions.map((status) => (
-                      <option key={status} value={status}>
-                        {status}
-                      </option>
-                    ))}
-                  </select>
+              <div className="flex gap-2 flex-wrap">
+                {statusOptions.map((status) => (
                   <button
-                    type="submit"
-                    className="w-full bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors"
+                    key={status}
+                    onClick={() => handleStatusChange(status)}
+                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium ${
+                      orderStatus === status
+                        ? "bg-primary text-white"
+                        : "bg-white border hover:bg-gray-50"
+                    }`}
                   >
-                    Update Status
+                    {status}
                   </button>
-                </form>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-medium text-gray-800 mb-3">Cooking Time</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {[15, 20, 25, 30].map((time) => (
+                  <button
+                    key={time}
+                    onClick={() => handleCookingTimeUpdate(time)}
+                    className={`py-2 px-3 rounded-lg text-sm font-medium ${
+                      preparationTime === time
+                        ? "bg-primary text-white"
+                        : "bg-white border hover:bg-gray-50"
+                    }`}
+                  >
+                    {time} min
+                  </button>
+                ))}
+              </div>
+              {isCustomCookingTime && (
+                <input
+                  type="number"
+                  min="1"
+                  max="120"
+                  value={preparationTime}
+                  onChange={(e) => setPreparationTime(parseInt(e.target.value))}
+                  className="mt-2 w-full p-2 border rounded-lg"
+                  placeholder="Custom minutes"
+                />
               )}
             </div>
-          </div>
-          <div>
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h2 className="font-semibold text-lg mb-4">Delivery Details</h2>
-              <AddressInputs disabled={true} addressProps={order} />
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h3 className="font-medium text-gray-800 mb-3">Delivery Time</h3>
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  {deliveryTimeRanges.slice(0, 4).map((range) => (
+                    <button
+                      key={range.range}
+                      onClick={() => handleDeliveryTimeUpdate(range)}
+                      className={`py-2 px-3 rounded-lg text-sm font-medium ${
+                        selectedTimeRange?.range === range.range
+                          ? "bg-primary text-white"
+                          : "bg-white border hover:bg-gray-50"
+                      }`}
+                    >
+                      {range.label}
+                    </button>
+                  ))}
+                </div>
+                {isCustomDeliveryTime && (
+                  <input
+                    type="number"
+                    min="1"
+                    max="120"
+                    value={deliveringTime || ""}
+                    onChange={(e) => {
+                      const minutes = parseInt(e.target.value);
+                      setDeliveringTime(minutes);
+                      setSelectedTimeRange({
+                        range: "custom",
+                        label: "Custom",
+                        minutes: minutes,
+                      });
+                    }}
+                    className="mt-2 w-full p-2 border rounded-lg"
+                    placeholder="Custom delivery time"
+                  />
+                )}
+              </div>
+            </div>
+
+            <div className="md:col-span-3">
+              <button
+                onClick={handleSaveTotalTime}
+                className="w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-primary/90 transition-colors font-medium"
+              >
+                Save Changes
+              </button>
             </div>
           </div>
         </div>
       )}
+
+      <div className="grid grid-cols-12 gap-4">
+        <div className="col-span-12 md:col-span-9">
+          <div className="bg-white p-2 rounded-lg shadow-sm overflow-x-auto">
+            <h2 className="font-semibold text-lg mb-4">Order Status</h2>
+            <div className="overflow-x-auto">
+              <div className="flex gap-4 min-w-max pb-4">
+                {statusOptions.map((status, index) => (
+                  <div key={status} className="flex-1 min-w-[200px]">
+                    <div
+                      className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                        status === orderStatus
+                          ? `${getStatusColor(status)} border border-gray-200`
+                          : ""
+                      }`}
+                    >
+                      {/* Status Icon */}
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
+                          ${
+                            statusIndex >= statusOptions.indexOf(status)
+                              ? "bg-primary text-white"
+                              : "bg-gray-100 text-gray-400"
+                          }`}
+                      >
+                        {statusIndex >= statusOptions.indexOf(status) ? (
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        ) : (
+                          <div className="w-2 h-2 rounded-full bg-current" />
+                        )}
+                      </div>
+
+                      {/* Status Text */}
+                      <div className="flex-grow whitespace-nowrap">
+                        <div
+                          className={`font-medium ${
+                            statusIndex >= statusOptions.indexOf(status)
+                              ? "text-gray-900"
+                              : "text-gray-500"
+                          }`}
+                        >
+                          {status}
+                        </div>
+                        {status === orderStatus && (
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            {status === "Completed"
+                              ? "Order delivered"
+                              : status === "Delivering"
+                              ? "On the way"
+                              : status === "Preparing"
+                              ? "In kitchen"
+                              : status === "Processing"
+                              ? "Order confirmed"
+                              : "Order received"}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Progress Indicator */}
+                      {status === orderStatus && (
+                        <div className="flex-shrink-0">
+                          <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Connector Line */}
+                    {index < statusOptions.length - 1 && (
+                      <div className="h-0.5 bg-gray-200 mt-6 mx-2" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-span-12 md:col-span-3">
+          <div className="bg-white p-2 rounded-lg shadow-sm">
+            <h2 className="font-semibold text-lg mb-4">Order Summary</h2>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span>Subtotal:</span>
+                <span>₱{subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Delivery:</span>
+                <span>₱20.00</span>
+              </div>
+              <div className="border-t pt-2 mt-2">
+                <div className="flex justify-between font-bold">
+                  <span>Total:</span>
+                  <span>₱{(subtotal + 20).toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-span-12 md:col-span-8">
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <h2 className="font-semibold text-lg mb-4">Order Items</h2>
+            {order?.cartProducts?.length > 0 ? (
+              <div className="space-y-4">
+                {order.cartProducts.map((product) => (
+                  <CartProduct
+                    key={product._id}
+                    product={product}
+                    readOnly={true}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500">No items in this order</p>
+            )}
+          </div>
+        </div>
+
+        <div className="col-span-12 md:col-span-4">
+          <div className="bg-white p-6 rounded-lg shadow-sm">
+            <h2 className="font-semibold text-lg mb-4">Delivery Details</h2>
+            <AddressInputs disabled={true} addressProps={order} />
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
