@@ -11,25 +11,38 @@ export default function RegisterPage() {
   const [creatingUser, setCreatingUser] = useState(false);
   const [userCreated, setUserCreated] = useState(false);
   const [error, setError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isGoogleAuth, setIsGoogleAuth] = useState(false);
 
   async function handleFormSubmit(ev) {
     ev.preventDefault();
     setCreatingUser(true);
     setError(false);
+    setErrorMessage("");
     setUserCreated(false);
+    setIsGoogleAuth(false);
 
     const promise = new Promise(async (resolve, reject) => {
-      const response = await fetch("/api/register", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-        headers: { "Content-Type": "application/json" },
-      });
-      if (response.ok) {
-        resolve();
-        setUserCreated(true);
-      } else {
-        reject();
+      try {
+        const response = await fetch("/api/register", {
+          method: "POST",
+          body: JSON.stringify({ email, password }),
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+          resolve();
+          setUserCreated(true);
+        } else {
+          reject(data.error || "Error creating account");
+          setError(true);
+          setErrorMessage(data.error || "Error creating account");
+        }
+      } catch (err) {
+        reject("Error creating account");
         setError(true);
+        setErrorMessage("Error creating account");
       }
       setCreatingUser(false);
     });
@@ -37,14 +50,29 @@ export default function RegisterPage() {
     await toast.promise(promise, {
       loading: "Creating your account...",
       success: "Account created successfully!",
-      error: "Error creating account",
+      error: (err) => err.toString(),
     });
+  }
+
+  async function handleGoogleRegistration() {
+    try {
+      setIsGoogleAuth(true);
+      const result = await signIn("google", {
+        callbackUrl: "/",
+        redirect: true,
+      });
+    } catch (err) {
+      setError(true);
+      setErrorMessage("Error registering with Google");
+      toast.error("Failed to register with Google");
+      setIsGoogleAuth(false);
+    }
   }
 
   return (
     <section className="mt-8">
       <h1 className="text-center text-primary text-4xl mb-4">Register</h1>
-      {userCreated && (
+      {userCreated && !isGoogleAuth && (
         <div className="my-4 text-center bg-green-50 p-4 rounded-lg border border-green-200 max-w-xs mx-auto">
           <div className="text-green-700 font-semibold mb-2">
             Account created successfully!
@@ -71,9 +99,7 @@ export default function RegisterPage() {
       )}
       {error && (
         <div className="my-4 text-center p-4 bg-red-100 border border-red-400 text-red-700">
-          <strong>Error:</strong> An error has occurred.
-          <br />
-          Please try again later.
+          <strong>Error:</strong> {errorMessage || "An error has occurred."}
         </div>
       )}
       <form className="block max-w-xs mx-auto" onSubmit={handleFormSubmit}>
@@ -95,14 +121,15 @@ export default function RegisterPage() {
           Register
         </button>
         <div className="my-4 text-center text-gray-500">
-          or login with provider
+          or register with provider
         </div>
         <button
-          onClick={() => signIn("google", { callbackUrl: "/" })}
+          type="button"
+          onClick={handleGoogleRegistration}
           className="flex gap-4 justify-center"
         >
           <Image src={"/google.png"} alt={""} width={24} height={24} />
-          Login with google
+          Register with Google
         </button>
         <div className="text-center my-4 text-gray-500 border-t pt-4">
           Existing account?{" "}

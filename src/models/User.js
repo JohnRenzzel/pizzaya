@@ -6,6 +6,7 @@ const UserSchema = new Schema(
     email: { type: String, required: true, unique: true },
     password: {
       type: String,
+      required: false,
     },
     image: { type: String },
     superAdmin: { type: Boolean, default: false },
@@ -13,6 +14,7 @@ const UserSchema = new Schema(
     isStaff: { type: Boolean, default: false },
     branchId: { type: Schema.Types.ObjectId, ref: "Branch" },
     userInfo: { type: Schema.Types.ObjectId, ref: "UserInfo" },
+    googleAuth: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

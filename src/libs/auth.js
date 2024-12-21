@@ -8,7 +8,6 @@ import { MongoDBAdapter } from "@auth/mongodb-adapter";
 
 export const authOptions = {
   secret: process.env.SECRET,
-  adapter: MongoDBAdapter(clientPromise),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
@@ -41,18 +40,85 @@ export const authOptions = {
       },
     }),
   ],
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
   session: {
     strategy: "jwt",
   },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      try {
+        await mongoose.connect(process.env.MONGO_URL);
+
+        if (account.provider === "google") {
+          // Check if user exists
+          let existingUser = await User.findOne({ email: user.email });
+
+          if (!existingUser) {
+            // Create new user for Google sign-in with explicit default values
+            existingUser = await User.create({
+              email: user.email,
+              name: user.name || profile.name,
+              image: user.image,
+              googleAuth: true,
+              password: "",
+              // Explicitly set admin flags to false
+              isAdmin: false,
+              superAdmin: false,
+              isStaff: false,
+            });
+          } else {
+            // If user exists, only update Google-related fields
+            await User.findOneAndUpdate(
+              { email: user.email },
+              {
+                $set: {
+                  googleAuth: true,
+                  name: user.name || profile.name,
+                  image: user.image,
+                },
+              }
+            );
+          }
+
+          // Add user ID to the profile
+          user.id = existingUser._id.toString();
+          return true;
+        }
+
+        // For credentials login
+        if (account.provider === "credentials") {
+          const existingUser = await User.findOne({ email: user.email });
+          if (existingUser?.googleAuth) {
+            return false;
+          }
+        }
+
+        return true;
+      } catch (error) {
+        console.error("SignIn callback error:", error);
+        return false;
+      }
+    },
+    async jwt({ token, user, account, profile }) {
+      if (user) {
+        token.userId = user.id;
+        token.provider = account?.provider;
+      }
+      return token;
+    },
     async session({ session, token }) {
       if (session?.user) {
-        const user = await User.findOne({ email: session.user.email });
+        const user = await User.findById(token.userId);
         if (user) {
+          session.user.id = user._id.toString();
           session.user.superAdmin = user.superAdmin;
           session.user.isAdmin = user.isAdmin;
           session.user.isStaff = user.isStaff;
           session.user.branchId = user.branchId?.toString();
+          session.user.provider = token.provider;
         }
       }
       return session;
