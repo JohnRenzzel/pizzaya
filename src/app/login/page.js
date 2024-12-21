@@ -7,13 +7,26 @@ import Spinner from "@/components/layout/Spinner";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loginInProgress, setLoginInProgress] = useState("");
+  const [loginInProgress, setLoginInProgress] = useState(false);
+  const [error, setError] = useState("");
   const { data: session, status } = useSession();
 
   async function handleFormSubmit(ev) {
     ev.preventDefault();
+    setError("");
     setLoginInProgress(true);
-    await signIn("credentials", { email, password, callbackUrl: "/" });
+
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    if (result?.error) {
+      setError("Invalid credentials. Please check your email and password.");
+    } else {
+      window.location.href = "/";
+    }
     setLoginInProgress(false);
   }
 
@@ -34,6 +47,9 @@ export default function LoginPage() {
     <section className="mt-8">
       <h1 className="text-center text-primary text-4xl mb-4">Login</h1>
       <form className="max-w-xs mx-auto" onSubmit={handleFormSubmit}>
+        {error && (
+          <div className="text-center w-full text-red-500 mb-4">{error}</div>
+        )}
         <input
           type="email"
           name="email"
